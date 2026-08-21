@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "239672451399",
+    "project_id": "shopay-33dcd",
+    "storage_bucket": "shopay-33dcd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:239672451399:android:676f0d53f3f9c04413ec62",
+        "android_client_info": {
+          "package_name": "com.example.shopay"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDyXUyBwNuOLC01MbnrLLsdg0Dr1dygP64"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
