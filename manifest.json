@@ -1,6 +1,6 @@
 {
-    "name": "shop_seller_io",
-    "short_name": "shop_seller_io",
+    "name": "shopay",
+    "short_name": "shopay",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
