@@ -101071,7 +101071,7 @@ A.vh.prototype={
 zz(a){return this.adV(a)},
 adV(a){var s=0,r=A.t(t.H),q=1,p=[],o,n,m
 var $async$zz=A.u(function(b,c){if(b===1){p.push(c)
-s=q}for(;;)switch(s){case 0:n=A.hj("https://bit.ly/46cJnsp",0,null)
+s=q}for(;;)switch(s){case 0:n=A.hj("https://shopayshop.com/downloads/shopay.apk",0,null)
 q=3
 s=6
 return A.n(A.Mj(n,B.iX),$async$zz)
@@ -101804,7 +101804,7 @@ o=A.a_("\u09a6\u09cb\u0995\u09be\u09a8\u09c7\u09b0 \u099c\u09be\u09ae\u09be\u09a
 n=A.ay(20)
 m=k.f.gek()
 m=m==null?j:m.a.c.a.a
-m=A.du(A.a_("\u0986\u09ae\u09a8\u09cd\u09a4\u09cd\u09b0\u09a3 \u09b2\u09bf\u0982\u0995: https://shopayshop.com/register?ref="+(m==null?"":m),j,B.aZ,j,j,B.a4q,j,j),1)
+m=A.du(A.a_("\u0986\u09ae\u09a8\u09cd\u09a4\u09cd\u09b0\u09a3 \u09b2\u09bf\u0982\u0995: https://shopayshop.com/#/register?ref="+(m==null?"":m),j,B.aZ,j,j,B.a4q,j,j),1)
 l=A.ay(12)
 q=A.aP(j,A.bi(A.b([p,B.ah,o,B.ah,A.aP(j,A.bl(A.b([m,A.jF(!1,j,!0,A.aP(j,B.a8w,B.o,j,j,new A.aG(B.f,j,A.e8(B.ck,1),l,j,j,B.u),j,j,j,B.lH,j,j,j),j,!0,j,j,j,j,j,j,j,j,j,new A.auG(k),j,j,j,j,j,j,j)],h),B.p,B.q,B.l,0),B.o,j,j,new A.aG(B.bK,j,j,n,j,j,B.u),j,j,j,B.qL,j,j,j)],h),B.Z,B.q,B.l),B.o,j,j,new A.aG(B.f,j,j,s,q,j,B.u),j,j,j,B.av,j,j,j)
 s=A.bl(A.b([A.aP(j,j,B.o,j,j,new A.aG(B.ae,j,j,A.ay(2),j,j,B.u),j,18,j,j,j,j,4),B.bj,B.a70],h),B.p,B.q,B.l,0)
@@ -101964,7 +101964,7 @@ $S:648}
 A.auG.prototype={
 $0(){var s=this.a,r=s.f.gek()
 r=r==null?null:r.a.c.a.a
-A.qu(new A.lK("https://shopayshop.com/register?ref="+(r==null?"":r)))
+A.qu(new A.lK("https://shopayshop.com/#/register?ref="+(r==null?"":r)))
 s.c.M(t.q).f.b5(B.a0G)},
 $S:0}
 A.auH.prototype={
