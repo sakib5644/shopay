@@ -101071,7 +101071,7 @@ A.vh.prototype={
 zz(a){return this.adV(a)},
 adV(a){var s=0,r=A.t(t.H),q=1,p=[],o,n,m
 var $async$zz=A.u(function(b,c){if(b===1){p.push(c)
-s=q}for(;;)switch(s){case 0:n=A.hj("https://shopayshop.com/downloads/shopay.apk",0,null)
+s=q}for(;;)switch(s){case 0:n=A.hj("https://shopayshop.com/shopay.apk",0,null)
 q=3
 s=6
 return A.n(A.Mj(n,B.iX),$async$zz)
