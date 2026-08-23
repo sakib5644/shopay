@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; // ফায়ারবেস অপশন ফাইলটি কানেক্ট করা হলো
 
 import 'screens/login_screen.dart';
 import 'screens/registration_screen.dart';
@@ -7,7 +8,14 @@ import 'screens/registration_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp();
+  try {
+    // ফ্লাটার ওয়েবের জন্য সঠিক প্ল্যাটফর্ম অপশনসহ ফায়ারবেস ইনিশিয়ালাইজ করা
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } catch (e) {
+    debugPrint("Firebase initialization error: $e");
+  }
 
   runApp(const ShopayApp());
 }
@@ -29,77 +37,42 @@ class ShopayApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
       ),
 
-      // =========================================================
-      // ROUTING
-      // =========================================================
-
+      // ফ্লাটার ওয়েবে রাউটিং নিখুঁত রাখতে onGenerateRoute ব্যবহার করা হয়েছে
       onGenerateRoute: (settings) {
         final uri = Uri.base;
-
-        // -------------------------------------------------------
-        // Normal route
-        // -------------------------------------------------------
-
         String routePath = settings.name ?? '/';
 
-        // -------------------------------------------------------
-        // GitHub Pages 404.html থেকে আসা route
-        //
-        // উদাহরণ:
-        // /shopay/index.html?route=%2Fregister&ref=ABC123
-        // -------------------------------------------------------
-
-        final githubRoute =
-        uri.queryParameters['route'];
-
-        if (githubRoute != null &&
-            githubRoute.isNotEmpty) {
+        // GitHub Pages fallback route check
+        final githubRoute = uri.queryParameters['route'];
+        if (githubRoute != null && githubRoute.isNotEmpty) {
           routePath = Uri.decodeComponent(githubRoute);
         }
 
-        // -------------------------------------------------------
-        // Registration route
-        // -------------------------------------------------------
-
-        if (routePath == '/register' ||
-            routePath == '/register/') {
-
-          String? referrerId =
-          uri.queryParameters['ref'];
+        // যদি লিংকে #/register থাকে
+        if (routePath.contains('/register')) {
+          String? referrerId = uri.queryParameters['ref'];
 
           if (referrerId != null) {
             referrerId = referrerId.trim();
-          }
-
-          if (referrerId != null &&
-              referrerId.isEmpty) {
-            referrerId = null;
+            if (referrerId.isEmpty) {
+              referrerId = null;
+            }
           }
 
           return MaterialPageRoute(
-            builder: (context) {
-              return RegistrationScreen(
-                referrerId: referrerId,
-              );
-            },
+            builder: (context) => RegistrationScreen(
+              referrerId: referrerId,
+            ),
             settings: settings,
           );
         }
 
-        // -------------------------------------------------------
-        // Default Login
-        // -------------------------------------------------------
-
+        // ডিফল্ট বা অন্য সব ক্ষেত্রে LoginScreen দেখাবে
         return MaterialPageRoute(
-          builder: (context) {
-            return const LoginScreen();
-          },
+          builder: (context) => const LoginScreen(),
           settings: settings,
         );
       },
-
-      // সাধারণভাবে Login Screen
-      home: const LoginScreen(),
     );
   }
 }
