@@ -39,6 +39,7 @@ class ShopayApp extends StatelessWidget {
 
       // ফ্লাটার ওয়েবে রাউটিং নিখুঁত রাখতে onGenerateRoute ব্যবহার করা হয়েছে
       onGenerateRoute: (settings) {
+        // ব্রাউজারের বর্তমান ফুল ইউআরআই (URI) এবং কুয়েরি প্যারামিটার সরাসরি ফেচ করা
         final uri = Uri.base;
         String routePath = settings.name ?? '/';
 
@@ -48,9 +49,14 @@ class ShopayApp extends StatelessWidget {
           routePath = Uri.decodeComponent(githubRoute);
         }
 
-        // যদি লিংকে #/register থাকে
-        if (routePath.contains('/register')) {
-          String? referrerId = uri.queryParameters['ref'];
+        // যদি লিংকে /register অথবা রাউট পাথে রেজিস্টার থাকে
+        if (routePath.contains('/register') || uri.path.contains('/register')) {
+          // প্রথমে সেটিংস বা রাউটের নিজস্ব প্যারামিটার থেকে, না পেলে সরাসরি Uri.base থেকে 'ref' ধরবে
+          String? referrerId = settings.arguments is Map
+              ? (settings.arguments as Map)['ref']
+              : null;
+
+          referrerId ??= uri.queryParameters['ref'];
 
           if (referrerId != null) {
             referrerId = referrerId.trim();
