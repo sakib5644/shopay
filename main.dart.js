@@ -30172,7 +30172,7 @@ this.d=b
 this.a=c},
 I1:function I1(a,b,c,d,e){var _=this
 _.d=0
-_.f=_.e=""
+_.e=""
 _.r=a
 _.w=b
 _.x=!1
@@ -102199,9 +102199,9 @@ this.a.x=q
 if(!r)s.h(0,"taskOffNotice")},
 $S:0}
 A.avr.prototype={
-$0(){var s=this.a,r=this.b
-s.e=r
-s.f="https://shopayshop.com/#/register?ref="+B.c.b6(r).toUpperCase()},
+$0(){var s=this.b
+this.a.e=s
+B.c.b6(s)},
 $S:0}
 A.avs.prototype={
 $0(){var s=this.a
@@ -102340,7 +102340,7 @@ return new A.yv(s.z,s.Q,null)},
 $S:651}
 A.av5.prototype={
 $0(){var s=this.a
-A.qB(new A.lN(s.f))
+A.qB(new A.lN("https://shopayshop.com/#/register?ref="+B.c.b6(s.e).toUpperCase()))
 s.c.M(t.q).f.b1(B.a15)},
 $S:0}
 A.av6.prototype={
