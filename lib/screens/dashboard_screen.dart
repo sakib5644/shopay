@@ -1629,8 +1629,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          // ডোমেইন নাম shopayshop.com আপডেট করা হলো
-                          'আমন্ত্রণ লিংক: https://shopayshop.com/register?ref=${_currentUser?.uid ?? ''}',
+                          'আমন্ত্রণ লিংক: https://shopay.app/register?ref=${_currentUser?.uid ?? ''}',
                           style: const TextStyle(
                             color: Colors.grey,
                             fontSize: 11,
@@ -1640,7 +1639,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                       InkWell(
                         onTap: () {
-                          final String referralLink = 'https://shopayshop.com/register?ref=${_currentUser?.uid ?? ''}';
+                          final String referralLink = 'https://shopay.app/register?ref=${_currentUser?.uid ?? ''}';
                           Clipboard.setData(
                             ClipboardData(text: referralLink),
                           );
@@ -1648,7 +1647,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             const SnackBar(
                               content: Text('রেফারেল লিংক কপি করা হয়েছে!'),
                               backgroundColor: Colors.green,
-                              behavior: SnackBarBehavior.floating,
                             ),
                           );
                         },
