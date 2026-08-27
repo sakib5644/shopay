@@ -19,296 +19,296 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
-  final _nameController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _captchaController = TextEditingController();
+final _nameController = TextEditingController();
+final _phoneController = TextEditingController();
+final _passwordController = TextEditingController();
+final _captchaController = TextEditingController();
 
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+final FirebaseAuth _auth = FirebaseAuth.instance;
+final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  bool _isObscure = true;
-  bool _isLoading = false;
+bool _isObscure = true;
+bool _isLoading = false;
 
-  String _captchaCode = '';
+String _captchaCode = '';
 
 // ============================================================
 // REFERRAL ID (URL বা Widget থেকে রিসিভ করা)
 // ============================================================
 
-  String? get _referrerId {
+String? get _referrerId {
 // প্রথমে উইজেট থেকে আসা রেফারার আইডি চেক করবে
-    final ref = widget.referrerId?.trim();
-    if (ref != null && ref.isNotEmpty) {
-      return ref;
-    }
+final ref = widget.referrerId?.trim();
+if (ref != null && ref.isNotEmpty) {
+return ref;
+}
 
 // যদি উইজেট থেকে না আসে, তবে ওয়েব ব্রাউজারের URL থেকে সরাসরি (?ref=XXXXX) ধরার চেষ্টা করবে
-    try {
-      final uri = Uri.base;
-      final refFromUrl = uri.queryParameters['ref']?.trim();
-      if (refFromUrl != null && refFromUrl.isNotEmpty) {
-        return refFromUrl;
-      }
-    } catch (e) {
+try {
+final uri = Uri.base;
+final refFromUrl = uri.queryParameters['ref']?.trim();
+if (refFromUrl != null && refFromUrl.isNotEmpty) {
+return refFromUrl;
+}
+} catch (e) {
 // মোবাইল অ্যাপ বা অন্য প্ল্যাটফর্মের ক্ষেত্রে ইগনোর করবে
-    }
+}
 
-    return null;
-  }
+return null;
+}
 
-  @override
-  void initState() {
-    super.initState();
-    _generateCaptcha();
-  }
+@override
+void initState() {
+super.initState();
+_generateCaptcha();
+}
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _phoneController.dispose();
-    _passwordController.dispose();
-    _captchaController.dispose();
-    super.dispose();
-  }
+@override
+void dispose() {
+_nameController.dispose();
+_phoneController.dispose();
+_passwordController.dispose();
+_captchaController.dispose();
+super.dispose();
+}
 
 // ============================================================
 // CAPTCHA
 // ============================================================
 
-  void _generateCaptcha() {
-    const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-    final random = Random();
-    String code = '';
+void _generateCaptcha() {
+const characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+final random = Random();
+String code = '';
 
-    for (int i = 0; i < 5; i++) {
-      code += characters[random.nextInt(characters.length)];
-    }
+for (int i = 0; i < 5; i++) {
+code += characters[random.nextInt(characters.length)];
+}
 
-    if (!mounted) return;
+if (!mounted) return;
 
-    setState(() {
-      _captchaCode = code;
-      _captchaController.clear();
-    });
-  }
+setState(() {
+_captchaCode = code;
+_captchaController.clear();
+});
+}
 
 // ============================================================
 // REGISTER
 // ============================================================
 
-  Future<void> _registerAccount() async {
-    final name = _nameController.text.trim();
-    final phone = _phoneController.text.trim();
-    final password = _passwordController.text.trim();
-    final captcha = _captchaController.text.trim().toUpperCase();
+Future<void> _registerAccount() async {
+final name = _nameController.text.trim();
+final phone = _phoneController.text.trim();
+final password = _passwordController.text.trim();
+final captcha = _captchaController.text.trim().toUpperCase();
 
 // ----------------------------------------------------------
 // Name Validation
 // ----------------------------------------------------------
-    if (name.isEmpty) {
-      _showMessage('Please enter your full name.', Colors.orange);
-      return;
-    }
+if (name.isEmpty) {
+_showMessage('Please enter your full name.', Colors.orange);
+return;
+}
 
 // ----------------------------------------------------------
 // Phone Validation
 // ----------------------------------------------------------
-    if (phone.isEmpty) {
-      _showMessage('Please enter your phone number.', Colors.orange);
-      return;
-    }
+if (phone.isEmpty) {
+_showMessage('Please enter your phone number.', Colors.orange);
+return;
+}
 
-    if (!RegExp(r'^01[3-9]\d{8}$').hasMatch(phone)) {
-      _showMessage('Please enter a valid Bangladesh phone number.', Colors.orange);
-      return;
-    }
+if (!RegExp(r'^01[3-9]\d{8}$').hasMatch(phone)) {
+_showMessage('Please enter a valid Bangladesh phone number.', Colors.orange);
+return;
+}
 
 // ----------------------------------------------------------
 // Password Validation
 // ----------------------------------------------------------
-    if (password.length < 6) {
-      _showMessage('Password must be at least 6 characters.', Colors.orange);
-      return;
-    }
+if (password.length < 6) {
+_showMessage('Password must be at least 6 characters.', Colors.orange);
+return;
+}
 
 // ----------------------------------------------------------
 // CAPTCHA Validation
 // ----------------------------------------------------------
-    if (captcha.isEmpty) {
-      _showMessage('Please enter the verification code.', Colors.orange);
-      return;
-    }
+if (captcha.isEmpty) {
+_showMessage('Please enter the verification code.', Colors.orange);
+return;
+}
 
-    if (captcha != _captchaCode) {
-      _showMessage('Incorrect verification code.', Colors.red);
-      _generateCaptcha();
-      return;
-    }
+if (captcha != _captchaCode) {
+_showMessage('Incorrect verification code.', Colors.red);
+_generateCaptcha();
+return;
+}
 
-    setState(() {
-      _isLoading = true;
-    });
+setState(() {
+_isLoading = true;
+});
 
-    User? createdUser;
+User? createdUser;
 
-    try {
-      final loginEmail = '$phone@shopay.app';
+try {
+final loginEmail = '$phone@shopay.app';
 
 // ----------------------------------------------------------
 // Firebase Auth Account Create
 // ----------------------------------------------------------
-      final userCredential = await _auth.createUserWithEmailAndPassword(
-        email: loginEmail,
-        password: password,
-      );
+final userCredential = await _auth.createUserWithEmailAndPassword(
+email: loginEmail,
+password: password,
+);
 
-      createdUser = userCredential.user;
+createdUser = userCredential.user;
 
-      if (createdUser == null) {
-        throw Exception('Firebase user account could not be created.');
-      }
+if (createdUser == null) {
+throw Exception('Firebase user account could not be created.');
+}
 
-      await createdUser.updateDisplayName(name);
+await createdUser.updateDisplayName(name);
 
-      final referralId = _referrerId;
+final referralId = _referrerId;
 
 // ----------------------------------------------------------
 // Firestore Transaction (নিরাপদভাবে রেফারেল ও মেম্বার আপডেট)
 // ----------------------------------------------------------
-      await _firestore.runTransaction((transaction) async {
+await _firestore.runTransaction((transaction) async {
 // নতুন ইউজারের রেফারেন্স
-        final newUserRef = _firestore.collection('users').doc(createdUser!.uid);
+final newUserRef = _firestore.collection('users').doc(createdUser!.uid);
 
 // যদি ভ্যালিড রেফারার আইডি থাকে, তবে তার রেফারেন্স চেক করব
-        DocumentReference? referrerRef;
-        if (referralId != null && referralId.isNotEmpty) {
-          referrerRef = _firestore.collection('users').doc(referralId);
-          final referrerSnapshot = await transaction.get(referrerRef);
+DocumentReference? referrerRef;
+if (referralId != null && referralId.isNotEmpty) {
+referrerRef = _firestore.collection('users').doc(referralId);
+final referrerSnapshot = await transaction.get(referrerRef);
 
-          if (!referrerSnapshot.exists) {
+if (!referrerSnapshot.exists) {
 // যদি ভুল রেফারেল আইডি হয়, তবে রেফারার ছাড়াই অ্যাকাউন্ট তৈরি হবে (এরর হবে না)
-            referrerRef = null;
-          }
-        }
+referrerRef = null;
+}
+}
 
 // নতুন ইউজারের ডাটা
-        final userData = <String, dynamic>{
-          'uid': createdUser.uid,
-          'name': name,
-          'phone': phone,
-          'loginEmail': loginEmail,
-          'balance': 0.0,
-          'shopDeposit': 0.0,
-          'vipLevel': 'V1',
-          'luckyDrawChances': 0,
-          'status': 'active',
-          'referredBy': referrerRef != null ? referralId : 'none',
-          'createdAt': FieldValue.serverTimestamp(),
-        };
+final userData = <String, dynamic>{
+'uid': createdUser.uid,
+'name': name,
+'phone': phone,
+'loginEmail': loginEmail,
+'balance': 0.0,
+'shopDeposit': 0.0,
+'vipLevel': 'V1',
+'luckyDrawChances': 0,
+'status': 'active',
+'referredBy': referrerRef != null ? referralId : 'none',
+'createdAt': FieldValue.serverTimestamp(),
+};
 
 // ১. নতুন ইউজারের ডকুমেন্ট সেট করা
-        transaction.set(newUserRef, userData);
+transaction.set(newUserRef, userData);
 
 // ২. যদি সঠিক রেফারার থাকে, তবে তার মেম্বার কাউন্ট ১ বাড়িয়ে দেওয়া
-        if (referrerRef != null) {
-          transaction.update(referrerRef, {
-            'referredMembers': FieldValue.increment(1),
-          });
-        }
-      });
+if (referrerRef != null) {
+transaction.update(referrerRef, {
+'referredMembers': FieldValue.increment(1),
+});
+}
+});
 
 // ----------------------------------------------------------
 // Sign Out & Success
 // ----------------------------------------------------------
-      await _auth.signOut();
+await _auth.signOut();
 
-      if (!mounted) return;
+if (!mounted) return;
 
-      setState(() {
-        _isLoading = false;
-      });
+setState(() {
+_isLoading = false;
+});
 
-      _showMessage(
-        referralId != null && referralId.isNotEmpty
-            ? 'Account created successfully! Referral added.'
-            : 'Account created successfully! Please login.',
-        Colors.green,
-      );
+_showMessage(
+referralId != null && referralId.isNotEmpty
+? 'Account created successfully! Referral added.'
+: 'Account created successfully! Please login.',
+Colors.green,
+);
 
-      await Future.delayed(const Duration(milliseconds: 800));
+await Future.delayed(const Duration(milliseconds: 800));
 
-      if (!mounted) return;
+if (!mounted) return;
 
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const LoginScreen(),
-        ),
-            (route) => false,
-      );
-    } on FirebaseAuthException catch (e) {
-      if (createdUser != null) {
-        try {
-          await createdUser.delete();
-        } catch (_) {}
-      }
+Navigator.pushAndRemoveUntil(
+context,
+MaterialPageRoute(
+builder: (context) => const LoginScreen(),
+),
+(route) => false,
+);
+} on FirebaseAuthException catch (e) {
+if (createdUser != null) {
+try {
+await createdUser.delete();
+} catch (_) {}
+}
 
-      if (!mounted) return;
+if (!mounted) return;
 
-      setState(() {
-        _isLoading = false;
-      });
+setState(() {
+_isLoading = false;
+});
 
-      String message;
-      switch (e.code) {
-        case 'email-already-in-use':
-          message = 'This phone number is already registered.';
-          break;
-        case 'weak-password':
-          message = 'Password is too weak. Use at least 6 characters.';
-          break;
-        case 'invalid-email':
-          message = 'Invalid phone number.';
-          break;
-        case 'network-request-failed':
-          message = 'Internet connection problem.';
-          break;
-        default:
-          message = e.message ?? 'Account creation failed.';
-      }
+String message;
+switch (e.code) {
+case 'email-already-in-use':
+message = 'This phone number is already registered.';
+break;
+case 'weak-password':
+message = 'Password is too weak. Use at least 6 characters.';
+break;
+case 'invalid-email':
+message = 'Invalid phone number.';
+break;
+case 'network-request-failed':
+message = 'Internet connection problem.';
+break;
+default:
+message = e.message ?? 'Account creation failed.';
+}
 
-      _showMessage(message, Colors.red);
-      _generateCaptcha();
-    } catch (e) {
-      if (createdUser != null) {
-        try {
-          await createdUser.delete();
-        } catch (_) {}
-      }
+_showMessage(message, Colors.red);
+_generateCaptcha();
+} catch (e) {
+if (createdUser != null) {
+try {
+await createdUser.delete();
+} catch (_) {}
+}
 
-      if (!mounted) return;
+if (!mounted) return;
 
-      setState(() {
-        _isLoading = false;
-      });
+setState(() {
+_isLoading = false;
+});
 
-      _showMessage('Registration failed. Please try again.', Colors.red);
-      _generateCaptcha();
-    }
-  }
+_showMessage('Registration failed. Please try again.', Colors.red);
+_generateCaptcha();
+}
+}
 
-  void _showMessage(String message, Color color) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: color,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
+void _showMessage(String message, Color color) {
+if (!mounted) return;
+ScaffoldMessenger.of(context).hideCurrentSnackBar();
+ScaffoldMessenger.of(context).showSnackBar(
+SnackBar(
+content: Text(message),
+backgroundColor: color,
+behavior: SnackBarBehavior.floating,
+),
+);
+}
   @override
   Widget build(BuildContext context) {
     final hasReferral = _referrerId != null;

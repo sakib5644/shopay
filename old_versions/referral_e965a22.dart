@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -14,35 +14,10 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
   final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
   late TabController _tabController;
 
-  String _userReferralCode = ''; // ৫ সংখ্যার রেফার কোড সংরক্ষণের জন্য
-  bool _isLoadingCode = true;
-
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this); // লেভেল A, B, C এর জন্য ৩টি ট্যাব
-    _fetchUserReferralCode();
-  }
-
-  // ফায়ারস্টোর থেকে ইউজারের নিজস্ব ৫ সংখ্যার রেফার কোডটি নিয়ে আসা
-  Future<void> _fetchUserReferralCode() async {
-    if (currentUserId.isEmpty) return;
-    try {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUserId).get();
-      if (userDoc.exists) {
-        final data = userDoc.data();
-        setState(() {
-          // যদি ডেটাবেজে 'referralCode' না থাকে, সাময়িকভাবে UID-এর প্রথম ৫ ডিজিট বা ডিফল্ট দেখাবে
-          _userReferralCode = data?['referralCode'] ?? currentUserId.substring(0, 5).toUpperCase();
-          _isLoadingCode = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _userReferralCode = currentUserId.length >= 5 ? currentUserId.substring(0, 5).toUpperCase() : currentUserId;
-        _isLoadingCode = false;
-      });
-    }
+    _tabController = TabController(length: 3, vsync: this); // Óª▓ÓºçÓª¡ÓºçÓª▓ A, B, C ÓªÅÓª░ Óª£Óª¿ÓºìÓª» Óº®ÓªƒÓª┐ ÓªƒÓºìÓª»Óª¥Óª¼
   }
 
   @override
@@ -53,20 +28,19 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-    // ৫ সংখ্যার রেফার কোড দিয়ে লিংক তৈরি (যেমন: ?ref=12345)
-    final String referralLink = 'https://shopay.app/register?ref=$_userReferralCode';
+    final String referralLink = 'https://shopay.app/register?ref=$currentUserId';
 
     if (currentUserId.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('আমাদের টিম')),
-        body: const Center(child: Text('দয়া করে প্রথমে লগইন করুন।')),
+        appBar: AppBar(title: const Text('ÓªåÓª«Óª¥ÓªªÓºçÓª░ ÓªƒÓª┐Óª«')),
+        body: const Center(child: Text('ÓªªÓºƒÓª¥ ÓªòÓª░Óºç Óª¬ÓºìÓª░ÓªÑÓª«Óºç Óª▓ÓªùÓªçÓª¿ ÓªòÓª░ÓºüÓª¿ÓÑñ')),
       );
     }
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('আমাদের টিম ও কমিশন', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        title: const Text('ÓªåÓª«Óª¥ÓªªÓºçÓª░ ÓªƒÓª┐Óª« Óªô ÓªòÓª«Óª┐ÓªÂÓª¿', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
         backgroundColor: Colors.orange.shade700,
         iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
@@ -76,20 +50,20 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
           unselectedLabelColor: Colors.white70,
           indicatorColor: Colors.white,
           tabs: const [
-            Tab(text: 'লেভেল A (সরাসরি)'),
-            Tab(text: 'লেভেল B'),
-            Tab(text: 'লেভেল C'),
+            Tab(text: 'Óª▓ÓºçÓª¡ÓºçÓª▓ A (Óª©Óª░Óª¥Óª©Óª░Óª┐)'),
+            Tab(text: 'Óª▓ÓºçÓª¡ÓºçÓª▓ B'),
+            Tab(text: 'Óª▓ÓºçÓª¡ÓºçÓª▓ C'),
           ],
         ),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        // ফায়ারস্টোর থেকে বর্তমান ইউজারের রেফার করা মেম্বারদের ডাটা আনা
+        // Óª½Óª¥Óª»Óª╝Óª¥Óª░Óª©ÓºìÓªƒÓºïÓª░ ÓªÑÓºçÓªòÓºç Óª¼Óª░ÓºìÓªñÓª«Óª¥Óª¿ ÓªçÓªëÓª£Óª¥Óª░ÓºçÓª░ Óª░ÓºçÓª½Óª¥Óª░ ÓªòÓª░Óª¥ Óª«ÓºçÓª«ÓºìÓª¼Óª¥Óª░ÓªªÓºçÓª░ ÓªíÓª¥ÓªƒÓª¥ ÓªåÓª¿Óª¥
         stream: FirebaseFirestore.instance
             .collection('users')
-            .where('referredBy', isEqualTo: _userReferralCode.isNotEmpty ? _userReferralCode : currentUserId)
+            .where('referredBy', isEqualTo: currentUserId)
             .snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting || _isLoadingCode) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: Colors.orange));
           }
 
@@ -105,7 +79,7 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
             final data = doc.data() as Map<String, dynamic>;
             levelAMembers.add(data);
 
-            // স্ট্যাটাস চেক (active / inactive)
+            // Óª©ÓºìÓªƒÓºìÓª»Óª¥ÓªƒÓª¥Óª© ÓªÜÓºçÓªò (active / inactive)
             String status = data['status'] ?? 'active';
             if (status == 'active') {
               activeMembers++;
@@ -113,7 +87,7 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
               inactiveMembers++;
             }
 
-            // কমিশন হিসাব (যদি থাকে)
+            // ÓªòÓª«Óª┐ÓªÂÓª¿ Óª╣Óª┐Óª©Óª¥Óª¼ (Óª»ÓªªÓª┐ ÓªÑÓª¥ÓªòÓºç)
             if (data['commission'] != null) {
               totalCommission += (data['commission'] as num).toDouble();
             }
@@ -124,7 +98,7 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // ১. ওভারভিউ কার্ড (মোট সদস্য, অ্যাক্টিভ, ইনঅ্যাক্টিভ ও মোট ইনকাম)
+                // Óºº. ÓªôÓª¡Óª¥Óª░Óª¡Óª┐Óªë ÓªòÓª¥Óª░ÓºìÓªí (Óª«ÓºïÓªƒ Óª©ÓªªÓª©ÓºìÓª», ÓªàÓºìÓª»Óª¥ÓªòÓºìÓªƒÓª┐Óª¡, ÓªçÓª¿ÓªàÓºìÓª»Óª¥ÓªòÓºìÓªƒÓª┐Óª¡ Óªô Óª«ÓºïÓªƒ ÓªçÓª¿ÓªòÓª¥Óª«)
                 Container(
                   padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
@@ -145,16 +119,16 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
                   child: Column(
                     children: [
                       const Text(
-                        'আপনার রেফারেল টিম ও আয়ের বিবরণী',
+                        'ÓªåÓª¬Óª¿Óª¥Óª░ Óª░ÓºçÓª½Óª¥Óª░ÓºçÓª▓ ÓªƒÓª┐Óª« Óªô ÓªåÓºƒÓºçÓª░ Óª¼Óª┐Óª¼Óª░ÓªúÓºÇ',
                         style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 16),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          _buildStatItem('মোট সদস্য', '$totalMembers জন'),
-                          _buildStatItem('অ্যাক্টিভ', '$activeMembers জন'),
-                          _buildStatItem('ইনঅ্যাক্টিভ', '$inactiveMembers জন'),
+                          _buildStatItem('Óª«ÓºïÓªƒ Óª©ÓªªÓª©ÓºìÓª»', '$totalMembers Óª£Óª¿'),
+                          _buildStatItem('ÓªàÓºìÓª»Óª¥ÓªòÓºìÓªƒÓª┐Óª¡', '$activeMembers Óª£Óª¿'),
+                          _buildStatItem('ÓªçÓª¿ÓªàÓºìÓª»Óª¥ÓªòÓºìÓªƒÓª┐Óª¡', '$inactiveMembers Óª£Óª¿'),
                         ],
                       ),
                       const Divider(color: Colors.white54, height: 24),
@@ -164,7 +138,7 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
                           const Icon(Icons.account_balance_wallet, color: Colors.white, size: 20),
                           const SizedBox(width: 8),
                           Text(
-                            'মোট ইনকাম: ৳ ${totalCommission.toStringAsFixed(2)}',
+                            'Óª«ÓºïÓªƒ ÓªçÓª¿ÓªòÓª¥Óª«: Óº│ ${totalCommission.toStringAsFixed(2)}',
                             style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ],
@@ -174,7 +148,7 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
                 ),
                 const SizedBox(height: 16),
 
-                // ২. রেফারেল লিংক কপি করার বক্স (৫ ডিজিট কোড সহ)
+                // Óº¿. Óª░ÓºçÓª½Óª¥Óª░ÓºçÓª▓ Óª▓Óª┐ÓªéÓªò ÓªòÓª¬Óª┐ ÓªòÓª░Óª¥Óª░ Óª¼ÓªòÓºìÓª©
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -199,19 +173,19 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
                         onPressed: () {
                           Clipboard.setData(ClipboardData(text: referralLink));
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('রেফারেল লিংক সফলভাবে কপি করা হয়েছে!'), backgroundColor: Colors.green),
+                            const SnackBar(content: Text('Óª░ÓºçÓª½Óª¥Óª░ÓºçÓª▓ Óª▓Óª┐ÓªéÓªò Óª©Óª½Óª▓Óª¡Óª¥Óª¼Óºç ÓªòÓª¬Óª┐ ÓªòÓª░Óª¥ Óª╣ÓºƒÓºçÓªøÓºç!'), backgroundColor: Colors.green),
                           );
                         },
-                        child: const Text('কپی করুন'),
+                        child: const Text('ÓªòÓª¬Óª┐ ÓªòÓª░ÓºüÓª¿'),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 20),
 
-                // ৩. ট্যাব অনুযায়ী মেম্বার লিস্ট (Level A, B, C)
+                // Óº®. ÓªƒÓºìÓª»Óª¥Óª¼ ÓªàÓª¿ÓºüÓª»Óª¥ÓºƒÓºÇ Óª«ÓºçÓª«ÓºìÓª¼Óª¥Óª░ Óª▓Óª┐Óª©ÓºìÓªƒ (Level A, B, C)
                 const Text(
-                  'সদস্যদের তালিকা (নাম ও মোবাইল নম্বর)',
+                  'Óª©ÓªªÓª©ÓºìÓª»ÓªªÓºçÓª░ ÓªñÓª¥Óª▓Óª┐ÓªòÓª¥ (Óª¿Óª¥Óª« Óªô Óª«ÓºïÓª¼Óª¥ÓªçÓª▓ Óª¿Óª«ÓºìÓª¼Óª░)',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.black87),
                 ),
                 const SizedBox(height: 10),
@@ -221,9 +195,9 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      _buildMemberList(levelAMembers), // লেভেল A (সরাসরি)
-                      _buildEmptyLevel('লেভেল B এর কোনো সদস্য নেই'), // লেভেল B
-                      _buildEmptyLevel('লেভেল C এর কোনো সদস্য নেই'), // লেভেল C
+                      _buildMemberList(levelAMembers), // Óª▓ÓºçÓª¡ÓºçÓª▓ A (Óª©Óª░Óª¥Óª©Óª░Óª┐)
+                      _buildEmptyLevel('Óª▓ÓºçÓª¡ÓºçÓª▓ B ÓªÅÓª░ ÓªòÓºïÓª¿Óºï Óª©ÓªªÓª©ÓºìÓª» Óª¿ÓºçÓªç'), // Óª▓ÓºçÓª¡ÓºçÓª▓ B
+                      _buildEmptyLevel('Óª▓ÓºçÓª¡ÓºçÓª▓ C ÓªÅÓª░ ÓªòÓºïÓª¿Óºï Óª©ÓªªÓª©ÓºìÓª» Óª¿ÓºçÓªç'), // Óª▓ÓºçÓª¡ÓºçÓª▓ C
                     ],
                   ),
                 ),
@@ -247,14 +221,14 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
 
   Widget _buildEmptyLevel(String message) {
     return Center(
-        child: Text(message, style: const TextStyle(color: Colors.grey, fontSize: 13))
+      child: Text(message, style: const TextStyle(color: Colors.grey, fontSize: 13)),
     );
   }
 
   Widget _buildMemberList(List<Map<String, dynamic>> members) {
     if (members.isEmpty) {
       return const Center(
-        child: Text('এই লেভেলে এখনো কোনো সদস্য যুক্ত হয়নি!', style: TextStyle(color: Colors.grey, fontSize: 13)),
+        child: Text('ÓªÅÓªç Óª▓ÓºçÓª¡ÓºçÓª▓Óºç ÓªÅÓªûÓª¿Óºï ÓªòÓºïÓª¿Óºï Óª©ÓªªÓª©ÓºìÓª» Óª»ÓºüÓªòÓºìÓªñ Óª╣ÓºƒÓª¿Óª┐!', style: TextStyle(color: Colors.grey, fontSize: 13)),
       );
     }
 
@@ -262,8 +236,8 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
       itemCount: members.length,
       itemBuilder: (context, index) {
         final member = members[index];
-        final name = member['name'] ?? 'নামবিহীন ইউজার';
-        final phone = member['phone'] ?? 'নম্বর পাওয়া যায়নি';
+        final name = member['name'] ?? 'Óª¿Óª¥Óª«Óª¼Óª┐Óª╣ÓºÇÓª¿ ÓªçÓªëÓª£Óª¥Óª░';
+        final phone = member['phone'] ?? 'Óª¿Óª«ÓºìÓª¼Óª░ Óª¬Óª¥ÓªôÓºƒÓª¥ Óª»Óª¥ÓºƒÓª¿Óª┐';
         final status = member['status'] ?? 'active';
         final bool isActive = status == 'active';
 
@@ -297,7 +271,7 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'ফোন: $phone',
+                        'Óª½ÓºïÓª¿: $phone',
                         style: const TextStyle(color: Colors.grey, fontSize: 12),
                       ),
                     ],
@@ -314,7 +288,7 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
                   ),
                 ),
                 child: Text(
-                  isActive ? 'সক্রিয়' : 'নিষ্ক্রিয়',
+                  isActive ? 'Óª©ÓªòÓºìÓª░Óª┐Óºƒ' : 'Óª¿Óª┐ÓªÀÓºìÓªòÓºìÓª░Óª┐Óºƒ',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,

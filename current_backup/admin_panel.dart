@@ -22,61 +22,29 @@ class _AdminPanelState extends State<AdminPanel> {
   bool _loading = true;
   bool _saving = false;
 
-  // Global Settings State
-  bool _deductCollateralFromBalance = false;
-  bool _blockAccountFeature = false;
-  bool _withdrawalActive = true;
-  bool _closeWithdrawalAfter5PM = false;
-  bool _closeWithdrawalFriday = false;
-  bool _closeWithdrawalSaturday = false;
-  bool _fridayTaskOff = true;
-
-  final TextEditingController _noticeController = TextEditingController();
-
   List<Map<String, dynamic>> _vipLevels = [];
 
   @override
   void initState() {
     super.initState();
-    _loadAdminData();
+    _loadVipLevels();
   }
 
-  @override
-  void dispose() {
-    _noticeController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadAdminData() async {
+  Future<void> _loadVipLevels() async {
     try {
-      // Load Global Settings
-      final settingsDoc = await _firestore.collection('admin_settings').doc('global_config').get();
-      if (settingsDoc.exists) {
-        final data = settingsDoc.data() as Map<String, dynamic>;
-        _deductCollateralFromBalance = data['deductCollateralFromBalance'] ?? false;
-        _blockAccountFeature = data['blockAccountFeature'] ?? false;
-        _withdrawalActive = data['withdrawalActive'] ?? true;
-        _closeWithdrawalAfter5PM = data['closeWithdrawalAfter5PM'] ?? false;
-        _closeWithdrawalFriday = data['closeWithdrawalFriday'] ?? false;
-        _closeWithdrawalSaturday = data['closeWithdrawalSaturday'] ?? false;
-        _fridayTaskOff = data['fridayTaskOff'] ?? true;
-        _noticeController.text = data['noticeMessage'] ?? 'আজকের কাজ ও উত্তোলন স্বাভাবিক রয়েছে।';
-      }
-
-      // Load VIP Levels
       final snapshot = await _firestore.collection('vip_levels').get();
-      final List<Map<String, dynamic>> vipData = [];
+      final List<Map<String, dynamic>> data = [];
 
       for (final doc in snapshot.docs) {
         final map = doc.data();
-        vipData.add({
+        data.add({
           'id': doc.id,
           'commissionPerTask': _toDouble(map['commissionPerTask'] ?? map['commission']),
           'dailyTasks': _toInt(map['dailyTasks']),
         });
       }
 
-      vipData.sort((a, b) {
+      data.sort((a, b) {
         final aNumber = int.tryParse(a['id'].toString().replaceAll('v', '')) ?? 0;
         final bNumber = int.tryParse(b['id'].toString().replaceAll('v', '')) ?? 0;
         return aNumber.compareTo(bNumber);
@@ -84,7 +52,7 @@ class _AdminPanelState extends State<AdminPanel> {
 
       if (!mounted) return;
       setState(() {
-        _vipLevels = vipData;
+        _vipLevels = data;
         _loading = false;
       });
     } catch (e) {
@@ -92,19 +60,7 @@ class _AdminPanelState extends State<AdminPanel> {
       setState(() {
         _loading = false;
       });
-      _showMessage('ডাটা লোড করা যায়নি।\n$e', Colors.red);
-    }
-  }
-
-  Future<void> _saveGlobalSetting(String key, dynamic value) async {
-    try {
-      await _firestore.collection('admin_settings').doc('global_config').set({
-        key: value,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-      _showMessage('সেটিংস সফলভাবে আপডেট করা হয়েছে।', Colors.green);
-    } catch (e) {
-      _showMessage('সেটিংস সংরক্ষণ ব্যর্থ হয়েছে: $e', Colors.red);
+      _showMessage('VIP ডাটা লোড করা যায়নি।\n$e', Colors.red);
     }
   }
 
@@ -203,7 +159,7 @@ class _AdminPanelState extends State<AdminPanel> {
         'updatedAt': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      await _loadAdminData();
+      await _loadVipLevels();
       if (!mounted) return;
       _showMessage('$vipId সফলভাবে আপডেট হয়েছে।', Colors.green);
     } catch (e) {
@@ -247,122 +203,10 @@ class _AdminPanelState extends State<AdminPanel> {
           Text(user?.email ?? 'Admin', style: const TextStyle(color: Colors.white70)),
           const SizedBox(height: 12),
           const Text(
-            'VIP কমিশন, গ্লোবাল কন্ট্রোল ও নোটিশ Firebase থেকে নিয়ন্ত্রণ করুন',
+            'VIP কমিশন, স্পিন ও টার্গেট পুরস্কার Firebase থেকে নিয়ন্ত্রণ করুন',
             style: TextStyle(color: Colors.white, fontSize: 14),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGlobalSettingsCard() {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: const [
-                Icon(Icons.settings_applications, color: Colors.blueAccent),
-                SizedBox(width: 8),
-                Text(
-                  'ছুটি ও কাজের কন্ট্রোল (Global Settings)',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const Divider(height: 20),
-            SwitchListTile(
-              title: const Text('💰 ব্যালেন্স থেকে জামানত কাটুন'),
-              subtitle: const Text('চালু থাকলে ব্যালেন্স থেকে জামানত কাটা হবে'),
-              value: _deductCollateralFromBalance,
-              onChanged: (val) {
-                setState(() => _deductCollateralFromBalance = val);
-                _saveGlobalSetting('deductCollateralFromBalance', val);
-              },
-            ),
-            SwitchListTile(
-              title: const Text('🔒 অ্যাকাউন্ট ব্লক করুন'),
-              subtitle: const Text('জরুরী প্রয়োজনে অ্যাকাউন্ট সিস্টেম ব্লক রাখুন'),
-              value: _blockAccountFeature,
-              onChanged: (val) {
-                setState(() => _blockAccountFeature = val);
-                _saveGlobalSetting('blockAccountFeature', val);
-              },
-            ),
-            SwitchListTile(
-              title: const Text('💸 উত্তোলন ON/OFF'),
-              subtitle: const Text('পুরো সিস্টেমের উত্তোলন চালু বা বন্ধ রাখুন'),
-              value: _withdrawalActive,
-              onChanged: (val) {
-                setState(() => _withdrawalActive = val);
-                _saveGlobalSetting('withdrawalActive', val);
-              },
-            ),
-            SwitchListTile(
-              title: const Text('🕔 বিকেল ৫টার পর উত্তোলন বন্ধ'),
-              subtitle: const Text('সন্ধ্যা ৫টার পর স্বয়ংক্রিয়ভাবে উত্তোলন বন্ধ থাকবে'),
-              value: _closeWithdrawalAfter5PM,
-              onChanged: (val) {
-                setState(() => _closeWithdrawalAfter5PM = val);
-                _saveGlobalSetting('closeWithdrawalAfter5PM', val);
-              },
-            ),
-            SwitchListTile(
-              title: const Text('📅 শুক্রবার উত্তোলন বন্ধ'),
-              subtitle: const Text('প্রতি শুক্রবার উত্তোলন প্রক্রিয়া বন্ধ রাখুন'),
-              value: _closeWithdrawalFriday,
-              onChanged: (val) {
-                setState(() => _closeWithdrawalFriday = val);
-                _saveGlobalSetting('closeWithdrawalFriday', val);
-              },
-            ),
-            SwitchListTile(
-              title: const Text('📅 শনিবার উত্তোলন বন্ধ'),
-              subtitle: const Text('প্রতি শনিবার উত্তোলন প্রক্রিয়া বন্ধ রাখুন'),
-              value: _closeWithdrawalSaturday,
-              onChanged: (val) {
-                setState(() => _closeWithdrawalSaturday = val);
-                _saveGlobalSetting('closeWithdrawalSaturday', val);
-              },
-            ),
-            SwitchListTile(
-              title: const Text('📅 শুক্রবার কাজ বন্ধ (ছুটির দিন)'),
-              subtitle: const Text('শুক্রবার ব্যবহারকারীদের টাস্ক বা কাজ বন্ধ থাকবে'),
-              value: _fridayTaskOff,
-              onChanged: (val) {
-                setState(() => _fridayTaskOff = val);
-                _saveGlobalSetting('fridayTaskOff', val);
-              },
-            ),
-            const Divider(),
-            const Text('বর্তমান নোটিশ মেসেজ:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey)),
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _noticeController,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      isDense: true,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: () {
-                    _saveGlobalSetting('noticeMessage', _noticeController.text.trim());
-                  },
-                  child: const Text('সেভ'),
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -507,15 +351,11 @@ class _AdminPanelState extends State<AdminPanel> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : RefreshIndicator(
-        onRefresh: _loadAdminData,
+        onRefresh: _loadVipLevels,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             _buildHeader(),
-            const SizedBox(height: 20),
-
-            // Global Settings Section
-            _buildGlobalSettingsCard(),
             const SizedBox(height: 20),
 
             _buildNavigationCard(

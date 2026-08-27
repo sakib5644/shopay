@@ -1,4 +1,4 @@
-import 'package:shopay/screens/referral_screen.dart';
+﻿import 'package:shopay/screens/referral_screen.dart';
 import 'admin_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -42,7 +42,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 // ============================================================
 
   double _userBalance = 0.0;
-  double _shopDeposit = 0.0; // ২০ হাজার কেটে ০.০ করে দেওয়া হলো
+  double _shopDeposit = 0.0; // Óº¿Óºª Óª╣Óª¥Óª£Óª¥Óª░ ÓªòÓºçÓªƒÓºç Óºª.Óºª ÓªòÓª░Óºç ÓªªÓºçÓªôÓºƒÓª¥ Óª╣Óª▓Óºï
   double _todayEarnings = 0.0;
   double _totalEarnings = 0.0;
 
@@ -91,7 +91,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'আপনার Admin Panel ব্যবহারের অনুমতি নেই।',
+            'ÓªåÓª¬Óª¿Óª¥Óª░ Admin Panel Óª¼ÓºìÓª»Óª¼Óª╣Óª¥Óª░ÓºçÓª░ ÓªàÓª¿ÓºüÓª«ÓªñÓª┐ Óª¿ÓºçÓªçÓÑñ',
           ),
           backgroundColor: Colors.red,
         ),
@@ -113,7 +113,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 // ============================================================
 
   String _currentVipId = 'none';
-  String _currentVipName = 'VIP সক্রিয় নয়';
+  String _currentVipName = 'VIP Óª©ÓªòÓºìÓª░Óª┐Óª»Óª╝ Óª¿Óª»Óª╝';
 
   bool _isVipActive = false;
 
@@ -156,8 +156,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAdminStatus(); // প্রথম কাজ
-    _loadAllUserDataAndTasks(); // দ্বিতীয় কাজ
+    _checkAdminStatus(); // Óª¬ÓºìÓª░ÓªÑÓª« ÓªòÓª¥Óª£
+    _loadAllUserDataAndTasks(); // ÓªªÓºìÓª¼Óª┐ÓªñÓºÇÓºƒ ÓªòÓª¥Óª£
   }
 
 // ============================================================
@@ -194,8 +194,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 // ============================================================
 // VIP COMMISSION
 //
-// এখানে কমিশন UI-তে দেখানো হবে না।
-// কাজ সম্পন্ন হলে এই amount Firebase balance-এ যোগ হবে।
+// ÓªÅÓªûÓª¥Óª¿Óºç ÓªòÓª«Óª┐ÓªÂÓª¿ UI-ÓªñÓºç ÓªªÓºçÓªûÓª¥Óª¿Óºï Óª╣Óª¼Óºç Óª¿Óª¥ÓÑñ
+// ÓªòÓª¥Óª£ Óª©Óª«ÓºìÓª¬Óª¿ÓºìÓª¿ Óª╣Óª▓Óºç ÓªÅÓªç amount Firebase balance-ÓªÅ Óª»ÓºïÓªù Óª╣Óª¼ÓºçÓÑñ
 // ============================================================
 
   double getCommissionForVipLevel(
@@ -279,7 +279,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       default:
         _completedTasksCount = 0;
         _currentVipUnitPrice = 0.0;
-        _currentVipName = 'VIP সক্রিয় নয়';
+        _currentVipName = 'VIP Óª©ÓªòÓºìÓª░Óª┐Óª»Óª╝ Óª¿Óª»Óª╝';
         break;
     }
   }
@@ -346,8 +346,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               savedVip.toString().trim().toUpperCase();
         }
 
-        // VIP শুধুমাত্র ডিপোজিট থাকলেই সক্রিয় হবে।
-        // নতুন ইউজারের shopDeposit = 0 হলে VIP বন্ধ থাকবে।
+        // VIP ÓªÂÓºüÓªºÓºüÓª«Óª¥ÓªñÓºìÓª░ ÓªíÓª┐Óª¬ÓºïÓª£Óª┐Óªƒ ÓªÑÓª¥ÓªòÓª▓ÓºçÓªç Óª©ÓªòÓºìÓª░Óª┐Óª»Óª╝ Óª╣Óª¼ÓºçÓÑñ
+        // Óª¿ÓªñÓºüÓª¿ ÓªçÓªëÓª£Óª¥Óª░ÓºçÓª░ shopDeposit = 0 Óª╣Óª▓Óºç VIP Óª¼Óª¿ÓºìÓªº ÓªÑÓª¥ÓªòÓª¼ÓºçÓÑñ
         vipActive =
             vipId != 'none' &&
                 _shopDeposit > 0;
@@ -364,7 +364,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       } else {
         _dailyTaskLimit = 0;
         _currentVipUnitPrice = 0.0;
-        _currentVipName = 'VIP সক্রিয় নয়';
+        _currentVipName = 'VIP Óª©ÓªòÓºìÓª░Óª┐Óª»Óª╝ Óª¿Óª»Óª╝';
       }
 
       final double vipCommission =
@@ -403,7 +403,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
         completedList.add({
           'id': savedTaskId,
-          'name': data['name'] ?? 'কাজ',
+          'name': data['name'] ?? 'ÓªòÓª¥Óª£',
           'price': data['price'] ?? 0,
           'commission': data['commission'] ?? vipCommission,
         });
@@ -429,19 +429,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final String productName =
             data['name']?.toString().trim().isNotEmpty == true
                 ? data['name'].toString()
-                : 'ইলেকট্রনিক্স পণ্য';
+                : 'ÓªçÓª▓ÓºçÓªòÓªƒÓºìÓª░Óª¿Óª┐ÓªòÓºìÓª© Óª¬ÓªúÓºìÓª»';
 
         tasks.add({
           'id': doc.id,
 
-// শুধু পণ্যের নাম
+// ÓªÂÓºüÓªºÓºü Óª¬ÓªúÓºìÓª»ÓºçÓª░ Óª¿Óª¥Óª«
           'name': productName,
 
-// শুধু পণ্যের দাম
+// ÓªÂÓºüÓªºÓºü Óª¬ÓªúÓºìÓª»ÓºçÓª░ ÓªªÓª¥Óª«
           'price': data['price'] ?? 0,
 
-// কমিশন এখানে রাখা হচ্ছে না
-// UI-তেও দেখানো হবে না
+// ÓªòÓª«Óª┐ÓªÂÓª¿ ÓªÅÓªûÓª¥Óª¿Óºç Óª░Óª¥ÓªûÓª¥ Óª╣ÓªÜÓºìÓªøÓºç Óª¿Óª¥
+// UI-ÓªñÓºçÓªô ÓªªÓºçÓªûÓª¥Óª¿Óºï Óª╣Óª¼Óºç Óª¿Óª¥
 
           'category': data['category'] ?? 'Product',
 
@@ -496,7 +496,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ).showSnackBar(
         SnackBar(
           content: Text(
-            'তথ্য লোড করা যায়নি: $e',
+            'ÓªñÓªÑÓºìÓª» Óª▓ÓºïÓªí ÓªòÓª░Óª¥ Óª»Óª¥ÓºƒÓª¿Óª┐: $e',
           ),
           backgroundColor: Colors.redAccent,
         ),
@@ -521,7 +521,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 // ============================================================
 // AUTOMATIC PRODUCT IMAGE
 //
-// পণ্যের নাম/ক্যাটাগরি দেখে ছবি নির্বাচন করা হবে।
+// Óª¬ÓªúÓºìÓª»ÓºçÓª░ Óª¿Óª¥Óª«/ÓªòÓºìÓª»Óª¥ÓªƒÓª¥ÓªùÓª░Óª┐ ÓªªÓºçÓªûÓºç ÓªøÓª¼Óª┐ Óª¿Óª┐Óª░ÓºìÓª¼Óª¥ÓªÜÓª¿ ÓªòÓª░Óª¥ Óª╣Óª¼ÓºçÓÑñ
 // ============================================================
   String getAutoImageUrl(
     String productName, {
@@ -531,11 +531,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         '${category?.toLowerCase() ?? ''}';
 
     // ============================================================
-    // PRODUCT NUMBER বের করা
-    // যেমন:
-    // ইলেকট্রনিক পণ্য আইটেম #41
-    // ইলেকট্রনিক পণ্য আইটেম #64
-    // ইলেকট্রনিক পণ্য আইটেম #177
+    // PRODUCT NUMBER Óª¼ÓºçÓª░ ÓªòÓª░Óª¥
+    // Óª»ÓºçÓª«Óª¿:
+    // ÓªçÓª▓ÓºçÓªòÓªƒÓºìÓª░Óª¿Óª┐Óªò Óª¬ÓªúÓºìÓª» ÓªåÓªçÓªƒÓºçÓª« #41
+    // ÓªçÓª▓ÓºçÓªòÓªƒÓºìÓª░Óª¿Óª┐Óªò Óª¬ÓªúÓºìÓª» ÓªåÓªçÓªƒÓºçÓª« #64
+    // ÓªçÓª▓ÓºçÓªòÓªƒÓºìÓª░Óª¿Óª┐Óªò Óª¬ÓªúÓºìÓª» ÓªåÓªçÓªƒÓºçÓª« #177
     // ============================================================
 
     final numberMatch = RegExp(r'#(\d+)').firstMatch(text);
@@ -547,13 +547,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ১. মোবাইল / ফোন
+    // Óºº. Óª«ÓºïÓª¼Óª¥ÓªçÓª▓ / Óª½ÓºïÓª¿
     // ============================================================
 
     if (text.contains('phone') ||
         text.contains('mobile') ||
-        text.contains('মোবাইল') ||
-        text.contains('ফোন') ||
+        text.contains('Óª«ÓºïÓª¼Óª¥ÓªçÓª▓') ||
+        text.contains('Óª½ÓºïÓª¿') ||
         text.contains('iphone') ||
         text.contains('samsung')) {
       final images = [
@@ -567,13 +567,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ২. ল্যাপটপ / কম্পিউটার
+    // Óº¿. Óª▓ÓºìÓª»Óª¥Óª¬ÓªƒÓª¬ / ÓªòÓª«ÓºìÓª¬Óª┐ÓªëÓªƒÓª¥Óª░
     // ============================================================
 
     if (text.contains('laptop') ||
-        text.contains('ল্যাপটপ') ||
+        text.contains('Óª▓ÓºìÓª»Óª¥Óª¬ÓªƒÓª¬') ||
         text.contains('computer') ||
-        text.contains('কম্পিউটার')) {
+        text.contains('ÓªòÓª«ÓºìÓª¬Óª┐ÓªëÓªƒÓª¥Óª░')) {
       final images = [
         'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&w=600&q=80',
@@ -585,14 +585,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ৩. হেডফোন / ইয়ারফোন
+    // Óº®. Óª╣ÓºçÓªíÓª½ÓºïÓª¿ / ÓªçÓª»Óª╝Óª¥Óª░Óª½ÓºïÓª¿
     // ============================================================
 
     if (text.contains('headphone') ||
         text.contains('earphone') ||
-        text.contains('হেডফোন') ||
-        text.contains('ইয়ারফোন') ||
-        text.contains('ইয়ারফোন')) {
+        text.contains('Óª╣ÓºçÓªíÓª½ÓºïÓª¿') ||
+        text.contains('ÓªçÓºƒÓª¥Óª░Óª½ÓºïÓª¿') ||
+        text.contains('ÓªçÓª»Óª╝Óª¥Óª░Óª½ÓºïÓª¿')) {
       final images = [
         'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=600&q=80',
@@ -604,12 +604,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ৪. ঘড়ি
+    // Óº¬. ÓªÿÓªíÓª╝Óª┐
     // ============================================================
 
     if (text.contains('watch') ||
-        text.contains('ঘড়ি') ||
-        text.contains('ঘড়ি')) {
+        text.contains('ÓªÿÓº£Óª┐') ||
+        text.contains('ÓªÿÓªíÓª╝Óª┐')) {
       final images = [
         'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1524805444758-089113d48a6d?auto=format&fit=crop&w=600&q=80',
@@ -621,10 +621,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ৫. ক্যামেরা
+    // Óº½. ÓªòÓºìÓª»Óª¥Óª«ÓºçÓª░Óª¥
     // ============================================================
 
-    if (text.contains('camera') || text.contains('ক্যামেরা')) {
+    if (text.contains('camera') || text.contains('ÓªòÓºìÓª»Óª¥Óª«ÓºçÓª░Óª¥')) {
       final images = [
         'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1510127034890-ba27508e9f1c?auto=format&fit=crop&w=600&q=80',
@@ -636,12 +636,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ৬. TV
+    // Óº¼. TV
     // ============================================================
 
     if (text.contains('tv') ||
         text.contains('television') ||
-        text.contains('টিভি')) {
+        text.contains('ÓªƒÓª┐Óª¡Óª┐')) {
       final images = [
         'https://images.unsplash.com/photo-1593784991095-a205069470b6?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1461151304267-38535e780c79?auto=format&fit=crop&w=600&q=80',
@@ -652,13 +652,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ৭. জুতা / স্যান্ডেল
+    // Óº¡. Óª£ÓºüÓªñÓª¥ / Óª©ÓºìÓª»Óª¥Óª¿ÓºìÓªíÓºçÓª▓
     // ============================================================
 
     if (text.contains('shoe') ||
-        text.contains('জুতা') ||
-        text.contains('স্যান্ডেল') ||
-        text.contains('সেন্ডেল') ||
+        text.contains('Óª£ÓºüÓªñÓª¥') ||
+        text.contains('Óª©ÓºìÓª»Óª¥Óª¿ÓºìÓªíÓºçÓª▓') ||
+        text.contains('Óª©ÓºçÓª¿ÓºìÓªíÓºçÓª▓') ||
         text.contains('sandal')) {
       final images = [
         'https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80',
@@ -672,11 +672,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ৮. ব্যাগ
+    // Óº«. Óª¼ÓºìÓª»Óª¥Óªù
     // ============================================================
 
     if (text.contains('bag') ||
-        text.contains('ব্যাগ') ||
+        text.contains('Óª¼ÓºìÓª»Óª¥Óªù') ||
         text.contains('backpack')) {
       final images = [
         'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80',
@@ -689,14 +689,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ৯. শার্ট / পোশাক
+    // Óº». ÓªÂÓª¥Óª░ÓºìÓªƒ / Óª¬ÓºïÓªÂÓª¥Óªò
     // ============================================================
 
     if (text.contains('shirt') ||
-        text.contains('শার্ট') ||
-        text.contains('জামা') ||
+        text.contains('ÓªÂÓª¥Óª░ÓºìÓªƒ') ||
+        text.contains('Óª£Óª¥Óª«Óª¥') ||
         text.contains('dress') ||
-        text.contains('পোশাক') ||
+        text.contains('Óª¬ÓºïÓªÂÓª¥Óªò') ||
         text.contains('clothing')) {
       final images = [
         'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=600&q=80',
@@ -709,16 +709,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ১০. জ্যাকেট / শীতের পোশাক
+    // ÓººÓºª. Óª£ÓºìÓª»Óª¥ÓªòÓºçÓªƒ / ÓªÂÓºÇÓªñÓºçÓª░ Óª¬ÓºïÓªÂÓª¥Óªò
     // ============================================================
 
     if (text.contains('jacket') ||
-        text.contains('জ্যাকেট') ||
-        text.contains('শীত') ||
+        text.contains('Óª£ÓºìÓª»Óª¥ÓªòÓºçÓªƒ') ||
+        text.contains('ÓªÂÓºÇÓªñ') ||
         text.contains('winter') ||
-        text.contains('সোয়েটার') ||
-        text.contains('সোয়েটার') ||
-        text.contains('হুডি')) {
+        text.contains('Óª©ÓºïÓºƒÓºçÓªƒÓª¥Óª░') ||
+        text.contains('Óª©ÓºïÓª»Óª╝ÓºçÓªƒÓª¥Óª░') ||
+        text.contains('Óª╣ÓºüÓªíÓª┐')) {
       final images = [
         'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1548883354-94bcfe321cbb?auto=format&fit=crop&w=600&q=80',
@@ -730,13 +730,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ১১. প্যান্ট / জিন্স
+    // ÓººÓºº. Óª¬ÓºìÓª»Óª¥Óª¿ÓºìÓªƒ / Óª£Óª┐Óª¿ÓºìÓª©
     // ============================================================
 
     if (text.contains('pant') ||
-        text.contains('প্যান্ট') ||
+        text.contains('Óª¬ÓºìÓª»Óª¥Óª¿ÓºìÓªƒ') ||
         text.contains('jeans') ||
-        text.contains('জিন্স')) {
+        text.contains('Óª£Óª┐Óª¿ÓºìÓª©')) {
       final images = [
         'https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=600&q=80',
@@ -747,17 +747,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ১২. মাছ ধরা / Fishing
+    // ÓººÓº¿. Óª«Óª¥Óªø ÓªºÓª░Óª¥ / Fishing
     // ============================================================
 
     if (text.contains('fishing') ||
         text.contains('fishing rod') ||
-        text.contains('ফিশিং') ||
-        text.contains('মাছ ধরা') ||
-        text.contains('মাছ') ||
-        text.contains('বড়শি') ||
-        text.contains('বড়শি') ||
-        text.contains('ছিপ')) {
+        text.contains('Óª½Óª┐ÓªÂÓª┐Óªé') ||
+        text.contains('Óª«Óª¥Óªø ÓªºÓª░Óª¥') ||
+        text.contains('Óª«Óª¥Óªø') ||
+        text.contains('Óª¼Óº£ÓªÂÓª┐') ||
+        text.contains('Óª¼ÓªíÓª╝ÓªÂÓª┐') ||
+        text.contains('ÓªøÓª┐Óª¬')) {
       final images = [
         'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1534943441045-1009d7cbf8c0?auto=format&fit=crop&w=600&q=80',
@@ -768,16 +768,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ১৩. কসমেটিকস / পারফিউম
+    // ÓººÓº®. ÓªòÓª©Óª«ÓºçÓªƒÓª┐ÓªòÓª© / Óª¬Óª¥Óª░Óª½Óª┐ÓªëÓª«
     // ============================================================
 
     if (text.contains('cosmetic') ||
-        text.contains('কসমেটিক') ||
+        text.contains('ÓªòÓª©Óª«ÓºçÓªƒÓª┐Óªò') ||
         text.contains('lipstick') ||
-        text.contains('লিপস্টিক') ||
+        text.contains('Óª▓Óª┐Óª¬Óª©ÓºìÓªƒÓª┐Óªò') ||
         text.contains('perfume') ||
-        text.contains('পারফিউম') ||
-        text.contains('সুগন্ধি')) {
+        text.contains('Óª¬Óª¥Óª░Óª½Óª┐ÓªëÓª«') ||
+        text.contains('Óª©ÓºüÓªùÓª¿ÓºìÓªºÓª┐')) {
       final images = [
         'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1612817288484-6f916006741a?auto=format&fit=crop&w=600&q=80',
@@ -789,16 +789,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ১৪. রান্নাঘরের পণ্য
+    // ÓººÓº¬. Óª░Óª¥Óª¿ÓºìÓª¿Óª¥ÓªÿÓª░ÓºçÓª░ Óª¬ÓªúÓºìÓª»
     // ============================================================
 
     if (text.contains('kitchen') ||
-        text.contains('কিচেন') ||
-        text.contains('রান্না') ||
-        text.contains('হাঁড়ি') ||
-        text.contains('হাড়ি') ||
-        text.contains('পাতিল') ||
-        text.contains('বাটি')) {
+        text.contains('ÓªòÓª┐ÓªÜÓºçÓª¿') ||
+        text.contains('Óª░Óª¥Óª¿ÓºìÓª¿Óª¥') ||
+        text.contains('Óª╣Óª¥ÓªüÓº£Óª┐') ||
+        text.contains('Óª╣Óª¥Óº£Óª┐') ||
+        text.contains('Óª¬Óª¥ÓªñÓª┐Óª▓') ||
+        text.contains('Óª¼Óª¥ÓªƒÓª┐')) {
       final images = [
         'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1556912167-f556f1f39fdf?auto=format&fit=crop&w=600&q=80',
@@ -810,13 +810,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ১৫. USB / Flash Drive / Pendrive
+    // ÓººÓº½. USB / Flash Drive / Pendrive
     // ============================================================
 
     if (text.contains('usb') ||
         text.contains('flash drive') ||
         text.contains('pendrive') ||
-        text.contains('পেনড্রাইভ')) {
+        text.contains('Óª¬ÓºçÓª¿ÓªíÓºìÓª░Óª¥ÓªçÓª¡')) {
       final images = [
         'https://images.unsplash.com/photo-1625842268584-8f3296236761?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1614064641938-3bbee52942c7?auto=format&fit=crop&w=600&q=80',
@@ -827,11 +827,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ১৬. Charger
+    // ÓººÓº¼. Charger
     // ============================================================
 
     if (text.contains('charger') ||
-        text.contains('চার্জার') ||
+        text.contains('ÓªÜÓª¥Óª░ÓºìÓª£Óª¥Óª░') ||
         text.contains('charging')) {
       final images = [
         'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=600&q=80',
@@ -843,12 +843,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ১৭. Cable
+    // ÓººÓº¡. Cable
     // ============================================================
 
     if (text.contains('cable') ||
-        text.contains('কেবল') ||
-        text.contains('তার')) {
+        text.contains('ÓªòÓºçÓª¼Óª▓') ||
+        text.contains('ÓªñÓª¥Óª░')) {
       final images = [
         'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1544724569-5f546fd6f2b5?auto=format&fit=crop&w=600&q=80',
@@ -859,13 +859,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ১৮. Speaker / Bluetooth
+    // ÓººÓº«. Speaker / Bluetooth
     // ============================================================
 
     if (text.contains('speaker') ||
-        text.contains('স্পিকার') ||
+        text.contains('Óª©ÓºìÓª¬Óª┐ÓªòÓª¥Óª░') ||
         text.contains('bluetooth') ||
-        text.contains('ব্লুটুথ')) {
+        text.contains('Óª¼ÓºìÓª▓ÓºüÓªƒÓºüÓªÑ')) {
       final images = [
         'https://images.unsplash.com/photo-1608043152269-423dbba4e7e1?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1589003077984-894e133dabab?auto=format&fit=crop&w=600&q=80',
@@ -876,12 +876,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ১৯. Power Bank
+    // ÓººÓº». Power Bank
     // ============================================================
 
     if (text.contains('power bank') ||
-        text.contains('পাওয়ার ব্যাংক') ||
-        text.contains('পাওয়ার ব্যাংক')) {
+        text.contains('Óª¬Óª¥ÓªôÓª»Óª╝Óª¥Óª░ Óª¼ÓºìÓª»Óª¥ÓªéÓªò') ||
+        text.contains('Óª¬Óª¥ÓªôÓºƒÓª¥Óª░ Óª¼ÓºìÓª»Óª¥ÓªéÓªò')) {
       final images = [
         'https://images.unsplash.com/photo-1609592424848-2f4f0e7b2f77?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1609592424632-9d9c5c8c7d8e?auto=format&fit=crop&w=600&q=80',
@@ -892,11 +892,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ২০. Router / WiFi
+    // Óº¿Óºª. Router / WiFi
     // ============================================================
 
     if (text.contains('router') ||
-        text.contains('রাউটার') ||
+        text.contains('Óª░Óª¥ÓªëÓªƒÓª¥Óª░') ||
         text.contains('wifi') ||
         text.contains('wi-fi')) {
       final images = [
@@ -909,14 +909,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ২১. সাধারণ ELECTRONIC পণ্য
+    // Óº¿Óºº. Óª©Óª¥ÓªºÓª¥Óª░Óªú ELECTRONIC Óª¬ÓªúÓºìÓª»
     //
-    // একই নাম হলেও # নম্বর অনুযায়ী আলাদা ছবি।
+    // ÓªÅÓªòÓªç Óª¿Óª¥Óª« Óª╣Óª▓ÓºçÓªô # Óª¿Óª«ÓºìÓª¼Óª░ ÓªàÓª¿ÓºüÓª»Óª¥ÓºƒÓºÇ ÓªåÓª▓Óª¥ÓªªÓª¥ ÓªøÓª¼Óª┐ÓÑñ
     // ============================================================
 
     if (text.contains('electronic') ||
         text.contains('electronics') ||
-        text.contains('ইলেকট্রনিক')) {
+        text.contains('ÓªçÓª▓ÓºçÓªòÓªƒÓºìÓª░Óª¿Óª┐Óªò')) {
       final electronicImages = [
         'https://images.unsplash.com/photo-1550009158-9ebf69173e03?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1498049794561-7780e7231661?auto=format&fit=crop&w=600&q=80',
@@ -936,7 +936,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     // ============================================================
-    // ২২. সাধারণ পণ্যের জন্য
+    // Óº¿Óº¿. Óª©Óª¥ÓªºÓª¥Óª░Óªú Óª¬ÓªúÓºìÓª»ÓºçÓª░ Óª£Óª¿ÓºìÓª»
     // ============================================================
 
     final generalImages = [
@@ -956,7 +956,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildProductImage(
     Map<String, dynamic> product,
   ) {
-    final String name = product['name']?.toString() ?? 'পণ্য';
+    final String name = product['name']?.toString() ?? 'Óª¬ÓªúÓºìÓª»';
 
     final String? category = product['category']?.toString();
 
@@ -1027,7 +1027,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'কাজ করতে হলে আগে ডিপোজিট করে VIP লেভেল সক্রিয় করতে হবে।',
+              'ÓªòÓª¥Óª£ ÓªòÓª░ÓªñÓºç Óª╣Óª▓Óºç ÓªåÓªùÓºç ÓªíÓª┐Óª¬ÓºïÓª£Óª┐Óªƒ ÓªòÓª░Óºç VIP Óª▓ÓºçÓª¡ÓºçÓª▓ Óª©ÓªòÓºìÓª░Óª┐Óª»Óª╝ ÓªòÓª░ÓªñÓºç Óª╣Óª¼ÓºçÓÑñ',
             ),
             backgroundColor: Colors.red,
           ),
@@ -1042,7 +1042,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('পণ্যের ID পাওয়া যায়নি।'),
+            content: Text('Óª¬ÓªúÓºìÓª»ÓºçÓª░ ID Óª¬Óª¥ÓªôÓºƒÓª¥ Óª»Óª¥ÓºƒÓª¿Óª┐ÓÑñ'),
           ),
         );
       }
@@ -1054,7 +1054,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'আজকের $_dailyTaskLimit টি কাজ ইতিমধ্যে সম্পন্ন হয়েছে।',
+              'ÓªåÓª£ÓªòÓºçÓª░ $_dailyTaskLimit ÓªƒÓª┐ ÓªòÓª¥Óª£ ÓªçÓªñÓª┐Óª«ÓªºÓºìÓª»Óºç Óª©Óª«ÓºìÓª¬Óª¿ÓºìÓª¿ Óª╣ÓºƒÓºçÓªøÓºçÓÑñ',
             ),
           ),
         );
@@ -1066,7 +1066,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('এই কাজটি ইতিমধ্যে সম্পন্ন করা হয়েছে।'),
+            content: Text('ÓªÅÓªç ÓªòÓª¥Óª£ÓªƒÓª┐ ÓªçÓªñÓª┐Óª«ÓªºÓºìÓª»Óºç Óª©Óª«ÓºìÓª¬Óª¿ÓºìÓª¿ ÓªòÓª░Óª¥ Óª╣ÓºƒÓºçÓªøÓºçÓÑñ'),
           ),
         );
       }
@@ -1082,7 +1082,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     try {
       final double commission = _currentVipUnitPrice;
       final double price = _toDouble(task['price']);
-      final String taskName = task['name']?.toString() ?? 'কাজ';
+      final String taskName = task['name']?.toString() ?? 'ÓªòÓª¥Óª£';
       final String dateKey = _todayKey();
 
       final userRef = _firestore.collection('users').doc(user.uid);
@@ -1092,7 +1092,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       final transactionRef = userRef.collection('transactions').doc();
 
-      // ফায়ারস্টোর ট্রানজ্যাকশন: কাজ সম্পন্ন, ট্রানজ্যাকশন এবং ইউজারের মেইন ব্যালেন্স আপডেট হবে
+      // Óª½Óª¥ÓºƒÓª¥Óª░Óª©ÓºìÓªƒÓºïÓª░ ÓªƒÓºìÓª░Óª¥Óª¿Óª£ÓºìÓª»Óª¥ÓªòÓªÂÓª¿: ÓªòÓª¥Óª£ Óª©Óª«ÓºìÓª¬Óª¿ÓºìÓª¿, ÓªƒÓºìÓª░Óª¥Óª¿Óª£ÓºìÓª»Óª¥ÓªòÓªÂÓª¿ ÓªÅÓª¼Óªé ÓªçÓªëÓª£Óª¥Óª░ÓºçÓª░ Óª«ÓºçÓªçÓª¿ Óª¼ÓºìÓª»Óª¥Óª▓ÓºçÓª¿ÓºìÓª© ÓªåÓª¬ÓªíÓºçÓªƒ Óª╣Óª¼Óºç
       await _firestore.runTransaction((transaction) async {
         final completedSnapshot = await transaction.get(completedTaskRef);
 
@@ -1100,7 +1100,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           throw Exception('TASK_ALREADY_COMPLETED');
         }
 
-        // ইউজারের বর্তমান ডাটা ফেচ করে ব্যালেন্স হিসাব করা
+        // ÓªçÓªëÓª£Óª¥Óª░ÓºçÓª░ Óª¼Óª░ÓºìÓªñÓª«Óª¥Óª¿ ÓªíÓª¥ÓªƒÓª¥ Óª½ÓºçÓªÜ ÓªòÓª░Óºç Óª¼ÓºìÓª»Óª¥Óª▓ÓºçÓª¿ÓºìÓª© Óª╣Óª┐Óª©Óª¥Óª¼ ÓªòÓª░Óª¥
         final userSnapshot = await transaction.get(userRef);
         double currentDbBalance = 0.0;
         if (userSnapshot.exists) {
@@ -1109,7 +1109,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
         double newDbBalance = currentDbBalance + commission;
 
-        // ১. completed_tasks এ রেকর্ড তৈরি (ডুপ্লিকেট আটকানোর জন্য)
+        // Óºº. completed_tasks ÓªÅ Óª░ÓºçÓªòÓª░ÓºìÓªí ÓªñÓºêÓª░Óª┐ (ÓªíÓºüÓª¬ÓºìÓª▓Óª┐ÓªòÓºçÓªƒ ÓªåÓªƒÓªòÓª¥Óª¿ÓºïÓª░ Óª£Óª¿ÓºìÓª»)
         transaction.set(
           completedTaskRef,
           {
@@ -1124,7 +1124,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           },
         );
 
-        // ২. transactions হিস্ট্রিতে রেকর্ড তৈরি
+        // Óº¿. transactions Óª╣Óª┐Óª©ÓºìÓªƒÓºìÓª░Óª┐ÓªñÓºç Óª░ÓºçÓªòÓª░ÓºìÓªí ÓªñÓºêÓª░Óª┐
         transaction.set(
           transactionRef,
           {
@@ -1138,7 +1138,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           },
         );
 
-        // ৩. ইউজারের মূল ব্যালেন্স ফায়ারস্টোরে পার্মানেন্টলি আপডেট করা (যাতে অ্যাপ রিস্টার্ট দিলেও টাকা না কমে)
+        // Óº®. ÓªçÓªëÓª£Óª¥Óª░ÓºçÓª░ Óª«ÓºéÓª▓ Óª¼ÓºìÓª»Óª¥Óª▓ÓºçÓª¿ÓºìÓª© Óª½Óª¥ÓºƒÓª¥Óª░Óª©ÓºìÓªƒÓºïÓª░Óºç Óª¬Óª¥Óª░ÓºìÓª«Óª¥Óª¿ÓºçÓª¿ÓºìÓªƒÓª▓Óª┐ ÓªåÓª¬ÓªíÓºçÓªƒ ÓªòÓª░Óª¥ (Óª»Óª¥ÓªñÓºç ÓªàÓºìÓª»Óª¥Óª¬ Óª░Óª┐Óª©ÓºìÓªƒÓª¥Óª░ÓºìÓªƒ ÓªªÓª┐Óª▓ÓºçÓªô ÓªƒÓª¥ÓªòÓª¥ Óª¿Óª¥ ÓªòÓª«Óºç)
         transaction.update(userRef, {
           'shopDeposit': newDbBalance,
           'balance': newDbBalance,
@@ -1147,7 +1147,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       if (!mounted) return;
 
-      // লোকাল স্টেটে ব্যালেন্স ও ইনকাম আপডেট করা
+      // Óª▓ÓºïÓªòÓª¥Óª▓ Óª©ÓºìÓªƒÓºçÓªƒÓºç Óª¼ÓºìÓª»Óª¥Óª▓ÓºçÓª¿ÓºìÓª© Óªô ÓªçÓª¿ÓªòÓª¥Óª« ÓªåÓª¬ÓªíÓºçÓªƒ ÓªòÓª░Óª¥
       setState(() {
         _completedTaskIds.add(taskId);
         _completedTasksCount++;
@@ -1155,6 +1155,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _userBalance += commission;
         _todayEarnings += commission;
         _totalEarnings += commission;
+        _shopDeposit += commission; // Óª▓ÓºïÓªòÓª¥Óª▓ Óª¡ÓºçÓª░Óª┐Óª»Óª╝ÓºçÓª¼Óª▓ Óª©Óª┐ÓªéÓªò Óª░Óª¥ÓªûÓª¥Óª░ Óª£Óª¿ÓºìÓª»
 
         _completedTaskList.add(
           {
@@ -1169,7 +1170,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'কাজ সম্পন্ন হয়েছে! কমিশন ৳ ${commission.toStringAsFixed(2)} যোগ হয়েছে।',
+            'ÓªòÓª¥Óª£ Óª©Óª«ÓºìÓª¬Óª¿ÓºìÓª¿ Óª╣ÓºƒÓºçÓªøÓºç! ÓªòÓª«Óª┐ÓªÂÓª¿ Óº│ ${commission.toStringAsFixed(2)} Óª»ÓºïÓªù Óª╣ÓºƒÓºçÓªøÓºçÓÑñ',
           ),
           backgroundColor: Colors.green,
         ),
@@ -1177,9 +1178,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } on FirebaseException catch (e) {
       if (!mounted) return;
 
-      String message = 'কাজ করতে হলে আগে ডিপোজিট করে VIP লেভেল সক্রিয় করতে হবে।';
+      String message = 'ÓªòÓª¥Óª£ ÓªòÓª░ÓªñÓºç Óª╣Óª▓Óºç ÓªåÓªùÓºç ÓªíÓª┐Óª¬ÓºïÓª£Óª┐Óªƒ ÓªòÓª░Óºç VIP Óª▓ÓºçÓª¡ÓºçÓª▓ Óª©ÓªòÓºìÓª░Óª┐Óª»Óª╝ ÓªòÓª░ÓªñÓºç Óª╣Óª¼ÓºçÓÑñ';
       if (e.code == 'unavailable') {
-        message = 'ইন্টারনেট বা Firebase সংযোগ পাওয়া যাচ্ছে না।';
+        message = 'ÓªçÓª¿ÓºìÓªƒÓª¥Óª░Óª¿ÓºçÓªƒ Óª¼Óª¥ Firebase Óª©ÓªéÓª»ÓºïÓªù Óª¬Óª¥ÓªôÓºƒÓª¥ Óª»Óª¥ÓªÜÓºìÓªøÓºç Óª¿Óª¥ÓÑñ';
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1194,13 +1195,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       String errMessage = e.toString();
       if (errMessage.contains('TASK_ALREADY_COMPLETED')) {
-        errMessage = 'এই কাজটি ইতিমধ্যে সম্পন্ন করা হয়েছে।';
+        errMessage = 'ÓªÅÓªç ÓªòÓª¥Óª£ÓªƒÓª┐ ÓªçÓªñÓª┐Óª«ÓªºÓºìÓª»Óºç Óª©Óª«ÓºìÓª¬Óª¿ÓºìÓª¿ ÓªòÓª░Óª¥ Óª╣ÓºƒÓºçÓªøÓºçÓÑñ';
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'কাজ সম্পন্ন করা যায়নি: $errMessage',
+            'ÓªòÓª¥Óª£ Óª©Óª«ÓºìÓª¬Óª¿ÓºìÓª¿ ÓªòÓª░Óª¥ Óª»Óª¥ÓºƒÓª¿Óª┐: $errMessage',
           ),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 5),
@@ -1222,17 +1223,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('কাজ নিশ্চিতকরণ'),
+          title: const Text('ÓªòÓª¥Óª£ Óª¿Óª┐ÓªÂÓºìÓªÜÓª┐ÓªñÓªòÓª░Óªú'),
           content: Text(
-            '${product['name'] ?? 'কাজ'}\n\n'
-                'মূল্য: ৳ ${product['price'] ?? 0}',
+            '${product['name'] ?? 'ÓªòÓª¥Óª£'}\n\n'
+                'Óª«ÓºéÓª▓ÓºìÓª»: Óº│ ${product['price'] ?? 0}',
           ),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(dialogContext);
               },
-              child: const Text('বাতিল'),
+              child: const Text('Óª¼Óª¥ÓªñÓª┐Óª▓'),
             ),
             ElevatedButton(
               onPressed: _isCompletingTask
@@ -1241,7 +1242,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 Navigator.pop(dialogContext);
                 _completeTask(product);
               },
-              child: const Text('নিশ্চিত করুন'),
+              child: const Text('Óª¿Óª┐ÓªÂÓºìÓªÜÓª┐Óªñ ÓªòÓª░ÓºüÓª¿'),
             ),
           ],
         );
@@ -1279,7 +1280,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'দৈনিক কাজ ($_currentVipName)',
+                    'ÓªªÓºêÓª¿Óª┐Óªò ÓªòÓª¥Óª£ ($_currentVipName)',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -1308,7 +1309,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'আজকের সম্পন্ন কাজ: '
+                'ÓªåÓª£ÓªòÓºçÓª░ Óª©Óª«ÓºìÓª¬Óª¿ÓºìÓª¿ ÓªòÓª¥Óª£: '
                     '$_completedTasksCount / $_dailyTaskLimit',
                 style: const TextStyle(
                   color: Colors.white70,
@@ -1340,7 +1341,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               : _workTasks.isEmpty
               ? const Center(
             child: Text(
-              'কোনো কাজ পাওয়া যায়নি!',
+              'ÓªòÓºïÓª¿Óºï ÓªòÓª¥Óª£ Óª¬Óª¥ÓªôÓºƒÓª¥ Óª»Óª¥ÓºƒÓª¿Óª┐!',
               style: TextStyle(
                 color: Colors.grey,
               ),
@@ -1397,7 +1398,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           CrossAxisAlignment.start,
                           children: [
                             Text(
-                              product['name']?.toString() ?? 'পণ্য',
+                              product['name']?.toString() ?? 'Óª¬ÓªúÓºìÓª»',
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
@@ -1408,7 +1409,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                             const SizedBox(height: 6),
                             Text(
-                              'দাম: ৳ ${product['price'] ?? 0}',
+                              'ÓªªÓª¥Óª«: Óº│ ${product['price'] ?? 0}',
                               style: TextStyle(
                                 color: Colors.grey.shade700,
                                 fontSize: 12,
@@ -1431,7 +1432,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           BorderRadius.circular(12),
                         ),
                         child: Text(
-                          'সম্পন্ন',
+                          'Óª©Óª«ÓºìÓª¬Óª¿ÓºìÓª¿',
                           style: TextStyle(
                             color: Colors.green.shade800,
                             fontSize: 11,
@@ -1452,7 +1453,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 .showSnackBar(
                               const SnackBar(
                                 content: Text(
-                                    'কাজ করতে হলে আগে ডিপোজিট করে VIP লেভেল সক্রিয় করতে হবে।'),
+                                    'ÓªòÓª¥Óª£ ÓªòÓª░ÓªñÓºç Óª╣Óª▓Óºç ÓªåÓªùÓºç ÓªíÓª┐Óª¬ÓºïÓª£Óª┐Óªƒ ÓªòÓª░Óºç VIP Óª▓ÓºçÓª¡ÓºçÓª▓ Óª©ÓªòÓºìÓª░Óª┐Óª»Óª╝ ÓªòÓª░ÓªñÓºç Óª╣Óª¼ÓºçÓÑñ'),
                                 backgroundColor:
                                 Colors.red,
                               ),
@@ -1560,7 +1561,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'ব্যালেন্স',
+                          'Óª¼ÓºìÓª»Óª¥Óª▓ÓºçÓª¿ÓºìÓª©',
                           style: TextStyle(
                             fontSize: 13,
                             color: Colors.grey.shade700,
@@ -1568,7 +1569,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '৳ ${_userBalance.toStringAsFixed(2)}',
+                          'Óº│ ${_userBalance.toStringAsFixed(2)}',
                           style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -1596,7 +1597,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         );
                       },
                       child: const Text(
-                        'মানিব্যাগে প্রবেশ',
+                        'Óª«Óª¥Óª¿Óª┐Óª¼ÓºìÓª»Óª¥ÓªùÓºç Óª¬ÓºìÓª░Óª¼ÓºçÓªÂ',
                         style: TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -1608,7 +1609,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'দোকানের জামানত  ৳ ${_shopDeposit.toStringAsFixed(0)}',
+                  'ÓªªÓºïÓªòÓª¥Óª¿ÓºçÓª░ Óª£Óª¥Óª«Óª¥Óª¿Óªñ  Óº│ ${_shopDeposit.toStringAsFixed(0)}',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
@@ -1628,8 +1629,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          // ডোমেইন নাম shopayshop.com আপডেট করা হলো
-                          'আমন্ত্রণ লিংক: https://shopayshop.com/register?ref=${_currentUser?.uid ?? ''}',
+                          // ÓªíÓºïÓª«ÓºçÓªçÓª¿ Óª¿Óª¥Óª« shopayshop.com ÓªåÓª¬ÓªíÓºçÓªƒ ÓªòÓª░Óª¥ Óª╣Óª▓Óºï
+                          'ÓªåÓª«Óª¿ÓºìÓªñÓºìÓª░Óªú Óª▓Óª┐ÓªéÓªò: https://shopayshop.com/register?ref=${_currentUser?.uid ?? ''}',
                           style: const TextStyle(
                             color: Colors.grey,
                             fontSize: 11,
@@ -1645,7 +1646,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           );
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('রেফারেল লিংক কপি করা হয়েছে!'),
+                              content: Text('Óª░ÓºçÓª½Óª¥Óª░ÓºçÓª▓ Óª▓Óª┐ÓªéÓªò ÓªòÓª¬Óª┐ ÓªòÓª░Óª¥ Óª╣ÓºƒÓºçÓªøÓºç!'),
                               backgroundColor: Colors.green,
                               behavior: SnackBarBehavior.floating,
                             ),
@@ -1664,7 +1665,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                           child: const Text(
-                            'কপি করুন',
+                            'ÓªòÓª¬Óª┐ ÓªòÓª░ÓºüÓª¿',
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -1691,7 +1692,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(width: 8),
               const Text(
-                'সবাই ব্যবহার করছে',
+                'Óª©Óª¼Óª¥Óªç Óª¼ÓºìÓª»Óª¼Óª╣Óª¥Óª░ ÓªòÓª░ÓªøÓºç',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -1709,7 +1710,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             childAspectRatio: 2.3,
             children: [
               _buildGridOptionTile(
-                title: 'প্রতিদিন লাকি ড্র',
+                title: 'Óª¬ÓºìÓª░ÓªñÓª┐ÓªªÓª┐Óª¿ Óª▓Óª¥ÓªòÓª┐ ÓªíÓºìÓª░',
                 icon: Icons.stars_rounded,
                 iconColor: Colors.amber,
                 onTap: () {
@@ -1722,7 +1723,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
               ),
               _buildGridOptionTile(
-                title: 'সেরা কর্মী পুরস্কার',
+                title: 'Óª©ÓºçÓª░Óª¥ ÓªòÓª░ÓºìÓª«ÓºÇ Óª¬ÓºüÓª░Óª©ÓºìÓªòÓª¥Óª░',
                 icon: Icons.emoji_events_outlined,
                 iconColor: Colors.orangeAccent,
                 onTap: () {
@@ -1735,7 +1736,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
               ),
               _buildGridOptionTile(
-                title: 'দোকান',
+                title: 'ÓªªÓºïÓªòÓª¥Óª¿',
                 icon: Icons.storefront_rounded,
                 iconColor: Colors.deepOrange,
                 onTap: () {
@@ -1745,7 +1746,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
               ),
               _buildGridOptionTile(
-                title: "What's up এ যান",
+                title: "What's up ÓªÅ Óª»Óª¥Óª¿",
                 icon: Icons.chat_bubble_outline_rounded,
                 iconColor: Colors.green,
                 onTap: () {
@@ -1771,7 +1772,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 },
               ),
               _buildGridOptionTile(
-                title: 'সাপোর্ট ম্যানেজার',
+                title: 'Óª©Óª¥Óª¬ÓºïÓª░ÓºìÓªƒ Óª«ÓºìÓª»Óª¥Óª¿ÓºçÓª£Óª¥Óª░',
                 icon: Icons.support_agent_outlined,
                 iconColor: Colors.blue,
                 onTap: () {
@@ -1788,7 +1789,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 12),
 
           // ======================================================
-          // আমাদের টিম (Team) অপশন বাটন (ড্যাশবোর্ড স্ক্রিনের জন্য)
+          // ÓªåÓª«Óª¥ÓªªÓºçÓª░ ÓªƒÓª┐Óª« (Team) ÓªàÓª¬ÓªÂÓª¿ Óª¼Óª¥ÓªƒÓª¿ (ÓªíÓºìÓª»Óª¥ÓªÂÓª¼ÓºïÓª░ÓºìÓªí Óª©ÓºìÓªòÓºìÓª░Óª┐Óª¿ÓºçÓª░ Óª£Óª¿ÓºìÓª»)
           // ======================================================
           InkWell(
             onTap: () {
@@ -1833,7 +1834,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'আমাদের টিম',
+                          'ÓªåÓª«Óª¥ÓªªÓºçÓª░ ÓªƒÓª┐Óª«',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -1842,7 +1843,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         SizedBox(height: 2),
                         Text(
-                          'আপনার রেফার করা সদস্য ও কমিশন দেখুন',
+                          'ÓªåÓª¬Óª¿Óª¥Óª░ Óª░ÓºçÓª½Óª¥Óª░ ÓªòÓª░Óª¥ Óª©ÓªªÓª©ÓºìÓª» Óªô ÓªòÓª«Óª┐ÓªÂÓª¿ ÓªªÓºçÓªûÓºüÓª¿',
                           style: TextStyle(
                             fontSize: 12,
                             color: Colors.grey,
@@ -1932,8 +1933,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildNavItem(0, Icons.check_box_outline_blank, 'কর্মক্ষেত্র'),
-          _buildNavItem(1, Icons.assignment_outlined, 'পণ্যঅর্ডার'),
+          _buildNavItem(0, Icons.check_box_outline_blank, 'ÓªòÓª░ÓºìÓª«ÓªòÓºìÓªÀÓºçÓªñÓºìÓª░'),
+          _buildNavItem(1, Icons.assignment_outlined, 'Óª¬ÓªúÓºìÓª»ÓªàÓª░ÓºìÓªíÓª¥Óª░'),
           GestureDetector(
             onTap: () {
               setState(() {
@@ -1959,8 +1960,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             ),
           ),
-          _buildNavItem(3, Icons.diamond_outlined, 'দোকানেরস্তর'),
-          _buildNavItem(4, Icons.sentiment_satisfied_alt_outlined, 'আমার'),
+          _buildNavItem(3, Icons.diamond_outlined, 'ÓªªÓºïÓªòÓª¥Óª¿ÓºçÓª░Óª©ÓºìÓªñÓª░'),
+          _buildNavItem(4, Icons.sentiment_satisfied_alt_outlined, 'ÓªåÓª«Óª¥Óª░'),
         ],
       ),
     );
@@ -2007,7 +2008,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
         title: Text(
-          _currentIndex == 0 ? 'Shopay - কর্মক্ষেত্র' : 'Shopay',
+          _currentIndex == 0 ? 'Shopay - ÓªòÓª░ÓºìÓª«ÓªòÓºìÓªÀÓºçÓªñÓºìÓª░' : 'Shopay',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
           ),

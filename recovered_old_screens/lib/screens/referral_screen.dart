@@ -14,35 +14,10 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
   final String currentUserId = FirebaseAuth.instance.currentUser?.uid ?? '';
   late TabController _tabController;
 
-  String _userReferralCode = ''; // ৫ সংখ্যার রেফার কোড সংরক্ষণের জন্য
-  bool _isLoadingCode = true;
-
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this); // লেভেল A, B, C এর জন্য ৩টি ট্যাব
-    _fetchUserReferralCode();
-  }
-
-  // ফায়ারস্টোর থেকে ইউজারের নিজস্ব ৫ সংখ্যার রেফার কোডটি নিয়ে আসা
-  Future<void> _fetchUserReferralCode() async {
-    if (currentUserId.isEmpty) return;
-    try {
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUserId).get();
-      if (userDoc.exists) {
-        final data = userDoc.data();
-        setState(() {
-          // যদি ডেটাবেজে 'referralCode' না থাকে, সাময়িকভাবে UID-এর প্রথম ৫ ডিজিট বা ডিফল্ট দেখাবে
-          _userReferralCode = data?['referralCode'] ?? currentUserId.substring(0, 5).toUpperCase();
-          _isLoadingCode = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _userReferralCode = currentUserId.length >= 5 ? currentUserId.substring(0, 5).toUpperCase() : currentUserId;
-        _isLoadingCode = false;
-      });
-    }
   }
 
   @override
@@ -53,8 +28,7 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-    // ৫ সংখ্যার রেফার কোড দিয়ে লিংক তৈরি (যেমন: ?ref=12345)
-    final String referralLink = 'https://shopay.app/register?ref=$_userReferralCode';
+    final String referralLink = 'https://shopay.app/register?ref=$currentUserId';
 
     if (currentUserId.isEmpty) {
       return Scaffold(
@@ -86,10 +60,10 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
         // ফায়ারস্টোর থেকে বর্তমান ইউজারের রেফার করা মেম্বারদের ডাটা আনা
         stream: FirebaseFirestore.instance
             .collection('users')
-            .where('referredBy', isEqualTo: _userReferralCode.isNotEmpty ? _userReferralCode : currentUserId)
+            .where('referredBy', isEqualTo: currentUserId)
             .snapshots(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting || _isLoadingCode) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: Colors.orange));
           }
 
@@ -174,7 +148,7 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
                 ),
                 const SizedBox(height: 16),
 
-                // ২. রেফারেল লিংক কপি করার বক্স (৫ ডিজিট কোড সহ)
+                // ২. রেফারেল লিংক কপি করার বক্স
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -202,7 +176,7 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
                             const SnackBar(content: Text('রেফারেল লিংক সফলভাবে কপি করা হয়েছে!'), backgroundColor: Colors.green),
                           );
                         },
-                        child: const Text('কپی করুন'),
+                        child: const Text('কপি করুন'),
                       ),
                     ],
                   ),
@@ -247,7 +221,7 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
 
   Widget _buildEmptyLevel(String message) {
     return Center(
-        child: Text(message, style: const TextStyle(color: Colors.grey, fontSize: 13))
+      child: Text(message, style: const TextStyle(color: Colors.grey, fontSize: 13)),
     );
   }
 
