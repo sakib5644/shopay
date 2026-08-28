@@ -2,371 +2,320 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class AdminDepositRequestsScreen extends StatelessWidget {
-const AdminDepositRequestsScreen({super.key});
-
-// ============================================================
-// VIP LEVEL নির্ধারণ
-// ============================================================
-
-String? _getVipLevel(double amount) {
-if (amount == 3000) {
-return 'V1';
-}
-
-if (amount == 6000) {
-return 'V2';
-}
+  const AdminDepositRequestsScreen({super.key});
+
+  // ============================================================
+  // VIP LEVEL নির্ধারণ
+  // ============================================================
+
+  String? _getVipLevel(double amount) {
+    if (amount == 3000) {
+      return 'V1';
+    }
+
+    if (amount == 6000) {
+      return 'V2';
+    }
 
-if (amount == 10000) {
-return 'V3';
-}
+    if (amount == 10000) {
+      return 'V3';
+    }
 
-if (amount == 20000) {
-return 'V4';
-}
+    if (amount == 20000) {
+      return 'V4';
+    }
 
-if (amount == 30000) {
-return 'V5';
-}
+    if (amount == 30000) {
+      return 'V5';
+    }
 
-if (amount == 50000) {
-return 'V6';
-}
+    if (amount == 50000) {
+      return 'V6';
+    }
 
-if (amount == 100000) {
-return 'V7';
-}
+    if (amount == 100000) {
+      return 'V7';
+    }
 
-return null;
-}
-
-// ============================================================
-// VIP NAME
-// ============================================================
-
-String _getVipName(String vipLevel) {
-switch (vipLevel) {
-case 'V1':
-return 'V1 VIP';
-
-case 'V2':
-return 'V2 VIP';
-
-case 'V3':
-return 'V3 VIP';
-
-case 'V4':
-return 'V4 VIP';
-
-case 'V5':
-return 'V5 VIP';
-
-case 'V6':
-return 'V6 VIP';
-
-case 'V7':
-return 'V7 VIP';
-
-default:
-return 'VIP';
-}
-}
-
-// ============================================================
-// APPROVE DEPOSIT
-// ============================================================
-
-Future<void> _approveDeposit(
-BuildContext context,
-String docId,
-String userId,
-double amount,
-) async {
-try {
-final firestore = FirebaseFirestore.instance;
-
-// --------------------------------------------------------
-// Deposit amount অনুযায়ী VIP নির্ধারণ
-// --------------------------------------------------------
-
-final String? vipLevel = _getVipLevel(amount);
-
-// নির্ধারিত amount না হলে Approve হবে না
-if (vipLevel == null) {
-if (!context.mounted) return;
-
-ScaffoldMessenger.of(context).showSnackBar(
-const SnackBar(
-content: Text(
-'এই Deposit amount-এর জন্য কোনো VIP level নির্ধারিত নেই।',
-),
-backgroundColor: Colors.red,
-),
-);
-
-return;
-}
-
-final String vipName = _getVipName(vipLevel);
-
-// --------------------------------------------------------
-// Firestore References
-// --------------------------------------------------------
-
-final depositRef =
-firestore.collection('deposit_requests').doc(docId);
-
-final userRef =
-firestore.collection('users').doc(userId);
-
-// --------------------------------------------------------
-// সব Update একই Transaction-এর মধ্যে
-// --------------------------------------------------------
-
-await firestore.runTransaction((transaction) async {
-// Deposit request পড়া
-final depositSnapshot =
-await transaction.get(depositRef);
-
-// User document পড়া
-final userSnapshot =
-await transaction.get(userRef);
-
-// ------------------------------------------------------
-// Deposit আছে কি না
-// ------------------------------------------------------
-
-if (!depositSnapshot.exists) {
-throw Exception(
-'Deposit request পাওয়া যায়নি।',
-);
-}
-
-// ------------------------------------------------------
-// User আছে কি না
-// ------------------------------------------------------
-
-if (!userSnapshot.exists) {
-throw Exception(
-'User account পাওয়া যায়নি।',
-);
-}
-
-final depositData =
-depositSnapshot.data() as Map<String, dynamic>;
-
-final userData =
-userSnapshot.data() as Map<String, dynamic>;
-
-// ------------------------------------------------------
-// বর্তমান Deposit Status
-// ------------------------------------------------------
-
-final String currentStatus =
-depositData['status']
-?.toString()
-.toLowerCase() ??
-'pending';
-
-// ------------------------------------------------------
-// Already Approved হলে আবার Approve করা যাবে না
-// ------------------------------------------------------
-
-if (currentStatus == 'approved') {
-throw Exception(
-'এই Deposit ইতিমধ্যে Approved হয়েছে।',
-);
-}
-
-// ------------------------------------------------------
-// বর্তমান Balance
-// ------------------------------------------------------
-
-final double currentBalance =
-(userData['balance'] ?? 0).toDouble();
-
-// ------------------------------------------------------
-// বর্তমান Shop Deposit
-// ------------------------------------------------------
-
-final double currentShopDeposit =
-(userData['shopDeposit'] ??
-userData['depositBalance'] ??
-0)
-.toDouble();
-
-// ------------------------------------------------------
-// নতুন Balance
-// ------------------------------------------------------
-
-final double newBalance =
-currentBalance + amount;
-
-// ------------------------------------------------------
-// নতুন Shop Deposit
-// ------------------------------------------------------
-
-final double newShopDeposit =
-currentShopDeposit + amount;
-
-// ======================================================
-// ১. DEPOSIT REQUEST APPROVED
-// ======================================================
-
-transaction.update(
-depositRef,
-{
-'status': 'approved',
-'approvedAt':
-FieldValue.serverTimestamp(),
-'approvedVipLevel':
-vipLevel,
-'approvedVipName':
-vipName,
-},
-);
-
-// ======================================================
-// ২. USER ACCOUNT UPDATE
-// ======================================================
-
-transaction.update(
-userRef,
-{
-'balance': newBalance,
-'shopDeposit': newShopDeposit,
-'depositStatus': 'approved',
-'lastDepositAmount': amount,
-'vipLevel': vipLevel,
-'currentVip': vipLevel,
-'vip_id': vipLevel,
-'isVipActive': true,
-'vipName': vipName,
-'vipActivatedAt':
-FieldValue.serverTimestamp(),
-'updatedAt':
-FieldValue.serverTimestamp(),
-},
-);
-
-// ======================================================
-// ৩. DEPOSIT TRANSACTION HISTORY
-// ======================================================
-
-final transactionRef = userRef
-.collection('transactions')
-.doc();
-
-transaction.set(
-transactionRef,
-{
-'type': 'deposit',
-'amount': amount,
-'title':
-'Deposit Approved - $vipName',
-'vipLevel':
-vipLevel,
-'status':
-'approved',
-'depositRequestId':
-docId,
-'createdAt':
-FieldValue.serverTimestamp(),
-'userId':
-userId,
-},
-);
-
-// ======================================================
-// ৪. REFERRAL COMMISSION & LUCKY SPIN (নতুন সংযোজন)
-// ======================================================
-// যদি এই ইউজারের কোনো 'referredBy' (রেফারকারী) থেকে থাকে
-final String referrerId = userData['referredBy'] ?? 'none';
-
-if (referrerId != 'none' && referrerId.isNotEmpty) {
-final referrerRef = firestore.collection('users').doc(referrerId);
-final referrerSnapshot = await transaction.get(referrerRef);
-
-if (referrerSnapshot.exists) {
-// ১০% কমিশন হিসাব (যেমন: ৩০০০ এর ১০% = ৩০০, ৬০০০ এর ১০% = ৬০০)
-double commissionAmount = amount * 0.10;
-
-// রেফারকারী ইউজারের ব্যালেন্সে কমিশন যোগ এবং ১টি লাকি স্পিন যোগ
-transaction.update(referrerRef, {
-'balance': FieldValue.increment(commissionAmount),
-'luckySpinCount': FieldValue.increment(1), // বা আপনার ডাটাবেজে লাকি স্পিনের ফিল্ডের নাম অনুযায়ী
-});
-}
-}
-});
-
-// ========================================================
-// SUCCESS MESSAGE
-// ========================================================
-
-if (!context.mounted) return;
-
-ScaffoldMessenger.of(context).showSnackBar(
-SnackBar(
-content: Text(
-'Deposit Approved সফল হয়েছে!\n'
-'৳ ${amount.toStringAsFixed(0)} → '
-'$vipName ($vipLevel) সক্রিয় হয়েছে।',
-),
-backgroundColor: Colors.green,
-duration: const Duration(seconds: 4),
-),
-);
-}
-
-// ==========================================================
-// FIREBASE ERROR
-// ==========================================================
-
-on FirebaseException catch (e) {
-if (!context.mounted) return;
-
-String message;
-
-if (e.code == 'permission-denied') {
-message =
-'Permission Denied। Firestore Security Rules-এ Admin permission দিতে হবে।';
-} else if (e.code == 'unavailable') {
-message =
-'Firebase সংযোগ পাওয়া যাচ্ছে না। Internet connection পরীক্ষা করুন।';
-} else {
-message =
-'Firebase Error: ${e.code}';
-}
-
-ScaffoldMessenger.of(context).showSnackBar(
-SnackBar(
-content: Text(message),
-backgroundColor: Colors.red,
-duration: const Duration(seconds: 5),
-),
-);
-}
-
-// ==========================================================
-// OTHER ERROR
-// ==========================================================
-
-catch (e) {
-if (!context.mounted) return;
-
-ScaffoldMessenger.of(context).showSnackBar(
-SnackBar(
-content: Text(
-'Deposit Approve করা যায়নি।\n$e',
-),
-backgroundColor: Colors.red,
-duration: const Duration(seconds: 5),
-),
-);
-}
-}
-// ============================================================
+    return null;
+  }
+
+  // ============================================================
+  // VIP NAME
+  // ============================================================
+
+  String _getVipName(String vipLevel) {
+    switch (vipLevel) {
+      case 'V1':
+        return 'V1 VIP';
+
+      case 'V2':
+        return 'V2 VIP';
+
+      case 'V3':
+        return 'V3 VIP';
+
+      case 'V4':
+        return 'V4 VIP';
+
+      case 'V5':
+        return 'V5 VIP';
+
+      case 'V6':
+        return 'V6 VIP';
+
+      case 'V7':
+        return 'V7 VIP';
+
+      default:
+        return 'VIP';
+    }
+  }
+
+  // ============================================================
+  // APPROVE DEPOSIT
+  // ============================================================
+
+  Future<void> _approveDeposit(
+      BuildContext context,
+      String docId,
+      String userId,
+      double amount,
+      ) async {
+    try {
+      final firestore = FirebaseFirestore.instance;
+
+      // --------------------------------------------------------
+      // Deposit amount অনুযায়ী VIP নির্ধারণ
+      // --------------------------------------------------------
+
+      final String? vipLevel = _getVipLevel(amount);
+
+      // নির্ধারিত amount না হলে Approve হবে না
+      if (vipLevel == null) {
+        if (!context.mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'এই Deposit amount-এর জন্য কোনো VIP level নির্ধারিত নেই।',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+
+        return;
+      }
+
+      final String vipName = _getVipName(vipLevel);
+
+      // --------------------------------------------------------
+      // Firestore References
+      // --------------------------------------------------------
+
+      final depositRef =
+      firestore.collection('deposit_requests').doc(docId);
+
+      final userRef =
+      firestore.collection('users').doc(userId);
+
+      // --------------------------------------------------------
+      // সব Update একই Transaction-এর মধ্যে
+      // --------------------------------------------------------
+
+      await firestore.runTransaction((transaction) async {
+        // Deposit request পড়া
+        final depositSnapshot =
+        await transaction.get(depositRef);
+
+        // User document পড়া
+        final userSnapshot =
+        await transaction.get(userRef);
+
+        // ------------------------------------------------------
+        // Deposit আছে কি না
+        // ------------------------------------------------------
+
+        if (!depositSnapshot.exists) {
+          throw Exception(
+            'Deposit request পাওয়া যায়নি।',
+          );
+        }
+
+        // ------------------------------------------------------
+        // User আছে কি না
+        // ------------------------------------------------------
+
+        if (!userSnapshot.exists) {
+          throw Exception(
+            'User account পাওয়া যায়নি।',
+          );
+        }
+
+        final depositData =
+        depositSnapshot.data() as Map<String, dynamic>;
+
+        final userData =
+        userSnapshot.data() as Map<String, dynamic>;
+
+        // ------------------------------------------------------
+        // বর্তমান Deposit Status
+        // ------------------------------------------------------
+
+        final String currentStatus =
+            depositData['status']
+                ?.toString()
+                .toLowerCase() ??
+                'pending';
+
+        // ------------------------------------------------------
+        // Already Approved হলে আবার Approve করা যাবে না
+        // ------------------------------------------------------
+
+        if (currentStatus == 'approved') {
+          throw Exception(
+            'এই Deposit ইতিমধ্যে Approved হয়েছে।',
+          );
+        }
+
+        // ------------------------------------------------------
+        // বর্তমান Shop Deposit (জামানত)
+        // ------------------------------------------------------
+
+        final double currentShopDeposit =
+        (userData['shopDeposit'] ??
+            userData['depositBalance'] ??
+            0)
+            .toDouble();
+
+        // ------------------------------------------------------
+        // নতুন Shop Deposit (জামানত যোগ করা হলো)
+        // ------------------------------------------------------
+
+        final double newShopDeposit =
+            currentShopDeposit + amount;
+
+        // ======================================================
+        // ১. DEPOSIT REQUEST APPROVED
+        // ======================================================
+
+        transaction.update(
+          depositRef,
+          {
+            'status': 'approved',
+            'approvedAt':
+            FieldValue.serverTimestamp(),
+            'approvedVipLevel':
+            vipLevel,
+            'approvedVipName':
+            vipName,
+          },
+        );
+
+        // ======================================================
+        // ২. USER ACCOUNT UPDATE (সরাসরি জামানতে যোগ হবে, মেইন ব্যালেন্স অপরিবর্তিত থাকবে)
+        // ======================================================
+
+        transaction.update(
+          userRef,
+          {
+            'shopDeposit': newShopDeposit,
+            'depositStatus': 'approved',
+            'lastDepositAmount': amount,
+            'vipLevel': vipLevel,
+            'currentVip': vipLevel,
+            'vip_id': vipLevel,
+            'isVipActive': true,
+            'vipName': vipName,
+            'vipActivatedAt':
+            FieldValue.serverTimestamp(),
+            'updatedAt':
+            FieldValue.serverTimestamp(),
+          },
+        );
+
+        // ======================================================
+        // ৩. DEPOSIT TRANSACTION HISTORY
+        // ======================================================
+
+        final transactionRef = userRef
+            .collection('transactions')
+            .doc();
+
+        transaction.set(
+          transactionRef,
+          {
+            'type': 'deposit',
+            'amount': amount,
+            'title':
+            'Deposit Approved - $vipName',
+            'vipLevel':
+            vipLevel,
+            'status':
+            'approved',
+            'depositRequestId':
+            docId,
+            'createdAt':
+            FieldValue.serverTimestamp(),
+            'userId':
+            userId,
+          },
+        );
+
+        // ======================================================
+        // ৪. REFERRAL COMMISSION & LUCKY SPIN
+        // ======================================================
+
+        final String referrerId = userData['referredBy'] ?? 'none';
+
+        if (referrerId != 'none' && referrerId.isNotEmpty) {
+          final referrerRef = firestore.collection('users').doc(referrerId);
+          final referrerSnapshot = await transaction.get(referrerRef);
+
+          if (referrerSnapshot.exists) {
+            double commissionAmount = amount * 0.10;
+
+            transaction.update(referrerRef, {
+              'balance': FieldValue.increment(commissionAmount),
+              'luckySpinCount': FieldValue.increment(1),
+            });
+          }
+        }
+      });
+
+      // ========================================================
+      // SUCCESS MESSAGE
+      // ========================================================
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Deposit Approved সফল হয়েছে!\n'
+                '৳ ${amount.toStringAsFixed(0)} জামানত যুক্ত হয়েছে → '
+                '$vipName ($vipLevel) সক্রিয় হয়েছে।',
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Deposit Approve করা যায়নি।\n$e',
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
+  }
+
+  // ============================================================
   // BUILD
   // ============================================================
 
@@ -396,22 +345,13 @@ duration: const Duration(seconds: 5),
           isEqualTo: 'pending',
         )
             .snapshots(),
-
         builder: (context, snapshot) {
-          // ----------------------------------------------------
-          // Loading
-          // ----------------------------------------------------
-
           if (snapshot.connectionState ==
               ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
-
-          // ----------------------------------------------------
-          // Error
-          // ----------------------------------------------------
 
           if (snapshot.hasError) {
             return Center(
@@ -428,10 +368,6 @@ duration: const Duration(seconds: 5),
             );
           }
 
-          // ----------------------------------------------------
-          // No Data
-          // ----------------------------------------------------
-
           if (!snapshot.hasData ||
               snapshot.data!.docs.isEmpty) {
             return const Center(
@@ -446,10 +382,6 @@ duration: const Duration(seconds: 5),
           }
 
           final docs = snapshot.data!.docs;
-
-          // ----------------------------------------------------
-          // Request List
-          // ----------------------------------------------------
 
           return ListView.builder(
             padding: const EdgeInsets.all(12),
@@ -469,13 +401,15 @@ duration: const Duration(seconds: 5),
               (data['amount'] ?? 0).toDouble();
 
               final String phone =
-                  data['phone']?.toString() ?? 'N/A';
+                  data['phone']?.toString() ?? data['trxId']?.toString() ?? 'N/A';
 
               final String trxId =
                   data['trxId']?.toString() ?? 'N/A';
 
+              // পেমেন্ট মেথড সঠিকভাবে ফেচ করার জন্য paymentMethod বা method দুটোই চেক করা হয়েছে
               final String method =
-                  data['method']?.toString() ??
+                  data['paymentMethod']?.toString() ??
+                      data['method']?.toString() ??
                       'bKash/Nagad';
 
               final String? vipLevel =
@@ -500,10 +434,6 @@ duration: const Duration(seconds: 5),
                     crossAxisAlignment:
                     CrossAxisAlignment.start,
                     children: [
-                      // ========================================
-                      // AMOUNT
-                      // ========================================
-
                       Row(
                         mainAxisAlignment:
                         MainAxisAlignment
@@ -563,27 +493,12 @@ duration: const Duration(seconds: 5),
                         height: 10,
                       ),
 
-                      // ========================================
-                      // USER INFORMATION
-                      // ========================================
-
-                      Text(
-                        'নম্বর: $phone',
-                        style:
-                        const TextStyle(
-                          fontSize: 13,
-                        ),
-                      ),
-
-                      const SizedBox(
-                        height: 4,
-                      ),
-
                       Text(
                         'Transaction ID: $trxId',
                         style:
                         const TextStyle(
                           fontSize: 13,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
 
@@ -603,10 +518,6 @@ duration: const Duration(seconds: 5),
                         height: 12,
                       ),
 
-                      // ========================================
-                      // VIP INFORMATION
-                      // ========================================
-
                       if (validAmount)
                         Container(
                           width: double.infinity,
@@ -617,7 +528,7 @@ duration: const Duration(seconds: 5),
                             BorderRadius.circular(10),
                           ),
                           child: Text(
-                            'এই Deposit Approve করলে '
+                            'এই Deposit Approve করলে জামানত যুক্ত হবে এবং '
                                 '$vipLevel VIP সক্রিয় হবে।',
                             style: TextStyle(
                               color: Colors.orange.shade800,
@@ -650,10 +561,6 @@ duration: const Duration(seconds: 5),
                       const SizedBox(
                         height: 12,
                       ),
-
-                      // ========================================
-                      // APPROVE BUTTON
-                      // ========================================
 
                       SizedBox(
                         width: double.infinity,

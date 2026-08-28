@@ -34,7 +34,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
 // ============================================================
@@ -42,20 +41,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
 // ============================================================
 
   double _userBalance = 0.0;
-  double _shopDeposit = 0.0; // ২০ হাজার কেটে ০.০ করে দেওয়া হলো
+  double _shopDeposit = 0.0;
   double _todayEarnings = 0.0;
   double _totalEarnings = 0.0;
 
   bool _isAdmin = false;
 
-  Future<void> _checkAdminStatus() async {
-    bool isAdmin = await _checkAdminAccess();
-    if (mounted) {
-      setState(() {
-        _isAdmin = isAdmin;
-      });
-    }
-  }
+// ============================================================
+// ADMIN GLOBAL SETTINGS
+// ============================================================
+
+  bool _fridayTaskOff = true;
+  bool _checkingAdminSettings = true;
+
+// ============================================================
+// CHECK ADMIN ACCESS
+// ============================================================
 
   Future<bool> _checkAdminAccess() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -76,11 +77,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       final data = doc.data();
 
-      return data?['role']?.toString().toLowerCase() == 'admin';
+      final bool roleIsAdmin =
+          data?['role']?.toString().trim().toLowerCase() == 'admin';
+
+      final bool isAdminFieldTrue =
+          data?['isAdmin'] == true;
+
+      return roleIsAdmin || isAdminFieldTrue;
     } catch (e) {
+      debugPrint('Admin check error: $e');
       return false;
     }
   }
+
+// ============================================================
+// OPEN ADMIN PANEL
+// ============================================================
 
   Future<void> _openAdminPanel() async {
     final isAdmin = await _checkAdminAccess();
@@ -137,7 +149,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   List<Map<String, dynamic>> _workTasks = [];
 
   final List<Map<String, dynamic>> _completedTaskList =
-      <Map<String, dynamic>>[];
+  <Map<String, dynamic>>[];
 
   final Set<String> _completedTaskIds = <String>{};
 
@@ -156,8 +168,64 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _checkAdminStatus(); // প্রথম কাজ
-    _loadAllUserDataAndTasks(); // দ্বিতীয় কাজ
+
+    // গুরুত্বপূর্ণ:
+    // আগে User + Admin + VIP data একসাথে load হবে।
+    // আলাদা asynchronous admin check-এর উপর VIP logic নির্ভর করবে না।
+
+    _fetchGlobalTaskSettings();
+    _loadAllUserDataAndTasks();
+  }
+
+// ============================================================
+// FETCH GLOBAL TASK SETTINGS
+// ============================================================
+
+  Future<void> _fetchGlobalTaskSettings() async {
+    try {
+      final doc = await _firestore
+          .collection('admin_settings')
+          .doc('global_config')
+          .get();
+
+      if (!mounted) return;
+
+      if (doc.exists) {
+        final data = doc.data() ?? {};
+
+        setState(() {
+          _fridayTaskOff = data['fridayTaskOff'] ?? true;
+          _checkingAdminSettings = false;
+        });
+      } else {
+        setState(() {
+          _checkingAdminSettings = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Global task settings error: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _checkingAdminSettings = false;
+      });
+    }
+  }
+
+// ============================================================
+// CHECK IF TASK IS RESTRICTED
+// ============================================================
+
+  bool _isTaskRestrictedToday() {
+    final now = DateTime.now();
+    final weekday = now.weekday;
+
+    if (weekday == DateTime.friday && _fridayTaskOff) {
+      return true;
+    }
+
+    return false;
   }
 
 // ============================================================
@@ -186,21 +254,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     return double.tryParse(
-          value.toString(),
-        ) ??
+      value.toString().trim(),
+    ) ??
         0.0;
   }
 
 // ============================================================
 // VIP COMMISSION
-//
-// এখানে কমিশন UI-তে দেখানো হবে না।
-// কাজ সম্পন্ন হলে এই amount Firebase balance-এ যোগ হবে।
 // ============================================================
 
-  double getCommissionForVipLevel(
-    String vipLevel,
-  ) {
+  double getCommissionForVipLevel(String vipLevel) {
     switch (vipLevel.toUpperCase()) {
       case 'V1':
         return 20.0;
@@ -285,7 +348,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
 // ============================================================
-// LOAD ALL USER + VIP + TASK DATA
+// LOAD ALL USER + ADMIN + VIP + TASK DATA
 // ============================================================
 
   Future<void> _loadAllUserDataAndTasks() async {
@@ -302,65 +365,155 @@ class _DashboardScreenState extends State<DashboardScreen> {
       final user = _currentUser;
 
       if (user == null) {
-        throw Exception(
-          'USER_NOT_LOGGED_IN',
-        );
+        throw Exception('USER_NOT_LOGGED_IN');
       }
 
-// --------------------------------------------------------
+// ============================================================
 // USER DOCUMENT
-// --------------------------------------------------------
+// ============================================================
 
-      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      final userDoc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (!userDoc.exists) {
+        throw Exception('USER_DOCUMENT_NOT_FOUND');
+      }
+
+      final data = userDoc.data() ?? {};
+
+// ============================================================
+// ADMIN STATUS
+// ============================================================
+
+      // Firebase-এর isAdmin এবং role — দুটোই গ্রহণ করা হবে।
+      final bool roleIsAdmin =
+          data['role']?.toString().trim().toLowerCase() == 'admin';
+
+      final bool isAdminFieldTrue =
+          data['isAdmin'] == true;
+
+      // সবচেয়ে গুরুত্বপূর্ণ:
+      // একই Firebase document থেকে Admin status নেওয়া হচ্ছে।
+      // তাই asynchronous _checkAdminStatus() শেষ হওয়ার জন্য
+      // অপেক্ষা করতে হবে না।
+
+      final bool isAdminUser =
+          roleIsAdmin || isAdminFieldTrue;
+
+      _isAdmin = isAdminUser;
+
+// ============================================================
+// BALANCE DATA
+// ============================================================
+
+      _userBalance = _toDouble(
+        data['balance'],
+      );
+
+      _shopDeposit = _toDouble(
+        data['shopDeposit'] ??
+            data['depositBalance'] ??
+            0.0,
+      );
+
+      _todayEarnings = _toDouble(
+        data['todayEarnings'],
+      );
+
+      _totalEarnings = _toDouble(
+        data['totalEarnings'],
+      );
+
+// ============================================================
+// VIP DATA
+// ============================================================
 
       String vipId = 'none';
-      bool vipActive = false;
 
-      if (userDoc.exists) {
-        final data = userDoc.data() ?? {};
+      // Firestore-এর সম্ভাব্য VIP fieldগুলো একসাথে support করা হলো।
+      final savedVip =
+          data['vipId'] ??
+              data['vipLevel'] ??
+              data['currentVip'] ??
+              data['vip_id'];
 
-        _userBalance =
-            _toDouble(data['balance']);
+      if (savedVip != null) {
+        String rawVip = savedVip
+            .toString()
+            .trim()
+            .toUpperCase();
 
-        _shopDeposit = _toDouble(
-          data['shopDeposit'] ??
-              data['depositBalance'] ??
-              0.0,
-        );
+        if (rawVip.isNotEmpty &&
+            rawVip != 'NONE' &&
+            rawVip != 'NULL') {
 
-        _todayEarnings =
-            _toDouble(data['todayEarnings']);
-
-        _totalEarnings =
-            _toDouble(data['totalEarnings']);
-
-        final savedVip =
-            data['vipLevel'] ??
-                data['currentVip'] ??
-                data['vip_id'];
-
-        if (savedVip != null &&
-            savedVip.toString().trim().isNotEmpty &&
-            savedVip.toString().trim().toLowerCase() != 'none') {
-          vipId =
-              savedVip.toString().trim().toUpperCase();
+          // "V4 VIP" → "V4"
+          if (rawVip.startsWith('V4')) {
+            vipId = 'V4';
+          } else if (rawVip.startsWith('V1')) {
+            vipId = 'V1';
+          } else if (rawVip.startsWith('V2')) {
+            vipId = 'V2';
+          } else if (rawVip.startsWith('V3')) {
+            vipId = 'V3';
+          } else if (rawVip.startsWith('V5')) {
+            vipId = 'V5';
+          } else if (rawVip.startsWith('V6')) {
+            vipId = 'V6';
+          } else if (rawVip.startsWith('V7')) {
+            vipId = 'V7';
+          } else if (int.tryParse(rawVip) != null) {
+            vipId = 'V$rawVip';
+          } else {
+            vipId = rawVip;
+          }
         }
-
-        // VIP শুধুমাত্র ডিপোজিট থাকলেই সক্রিয় হবে।
-        // নতুন ইউজারের shopDeposit = 0 হলে VIP বন্ধ থাকবে।
-        vipActive =
-            vipId != 'none' &&
-                _shopDeposit > 0;
       }
 
-// VIP SETTINGS
-// --------------------------------------------------------
+// ============================================================
+// VIP ACTIVE LOGIC
+// ============================================================
+
+      bool vipActive = false;
+
+      if (isAdminUser) {
+        // ======================================================
+        // ADMIN
+        // ======================================================
+        // Admin-এর জন্য Deposit বাধ্যতামূলক নয়।
+        // Admin সবসময় VIP Active থাকবে।
+
+        vipActive = true;
+
+        // Firebase-এ VIP না থাকলেও Admin-এর default V4।
+        if (vipId == 'none') {
+          vipId = 'V4';
+        }
+      } else {
+        // ======================================================
+        // NORMAL USER / MEMBER
+        // ======================================================
+
+        if (vipId != 'none') {
+          // আগে থেকেই VIP সেট করা থাকলে active।
+          vipActive = true;
+        } else {
+          // নতুন user-এর জন্য Deposit থাকতে হবে।
+          vipActive = _shopDeposit > 0;
+        }
+      }
+
+// ============================================================
+// SET VIP STATE
+// ============================================================
 
       _currentVipId = vipId;
       _isVipActive = vipActive;
 
       if (_isVipActive) {
-        _setVipSettings(vipId);
+        _setVipSettings(_currentVipId);
       } else {
         _dailyTaskLimit = 0;
         _currentVipUnitPrice = 0.0;
@@ -369,12 +522,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       final double vipCommission =
       _isVipActive
-          ? getCommissionForVipLevel(vipId)
+          ? getCommissionForVipLevel(_currentVipId)
           : 0.0;
 
-// --------------------------------------------------------
+// ============================================================
+// DEBUG INFORMATION
+// ============================================================
+
+      debugPrint(
+        '================ USER DATA ================',
+      );
+
+      debugPrint(
+        'UID: ${user.uid}',
+      );
+
+      debugPrint(
+        'isAdmin: $_isAdmin',
+      );
+
+      debugPrint(
+        'VIP ID: $_currentVipId',
+      );
+
+      debugPrint(
+        'VIP Active: $_isVipActive',
+      );
+
+      debugPrint(
+        'Shop Deposit: $_shopDeposit',
+      );
+
+      debugPrint(
+        'Balance: $_userBalance',
+      );
+
+      debugPrint(
+        '============================================',
+      );
+
+// ============================================================
 // COMPLETED TASKS
-// --------------------------------------------------------
+// ============================================================
 
       final todayKey = _todayKey();
 
@@ -383,75 +572,74 @@ class _DashboardScreenState extends State<DashboardScreen> {
           .doc(user.uid)
           .collection('completed_tasks')
           .where(
-            'dateKey',
-            isEqualTo: todayKey,
-          )
+        'dateKey',
+        isEqualTo: todayKey,
+      )
           .get();
 
       final completedIds = <String>{};
 
-      final completedList = <Map<String, dynamic>>[];
+      final completedList =
+      <Map<String, dynamic>>[];
 
       for (final doc in completedSnapshot.docs) {
         final data = doc.data();
 
-        final String savedTaskId = data['taskId']?.toString() ?? doc.id;
+        final String savedTaskId =
+            data['taskId']?.toString() ?? doc.id;
 
-        completedIds.add(
-          savedTaskId,
-        );
+        completedIds.add(savedTaskId);
 
         completedList.add({
           'id': savedTaskId,
           'name': data['name'] ?? 'কাজ',
           'price': data['price'] ?? 0,
-          'commission': data['commission'] ?? vipCommission,
+          'commission':
+          data['commission'] ?? vipCommission,
         });
       }
 
-// --------------------------------------------------------
+// ============================================================
 // LOAD ALL WORK TASKS
-// --------------------------------------------------------
+// ============================================================
 
-      final snapshot = await _firestore.collection('work_tasks').get();
+      final snapshot = await _firestore
+          .collection('work_tasks')
+          .get();
 
       final List<Map<String, dynamic>> tasks = [];
 
       for (final doc in snapshot.docs) {
         final data = doc.data();
 
-        final bool active = data['active'] != false;
+        final bool active =
+            data['active'] != false;
 
         if (!active) {
           continue;
         }
 
         final String productName =
-            data['name']?.toString().trim().isNotEmpty == true
-                ? data['name'].toString()
-                : 'ইলেকট্রনিক্স পণ্য';
+        data['name']
+            ?.toString()
+            .trim()
+            .isNotEmpty ==
+            true
+            ? data['name'].toString()
+            : 'ইলেকট্রনিক্স পণ্য';
 
         tasks.add({
           'id': doc.id,
-
-// শুধু পণ্যের নাম
           'name': productName,
-
-// শুধু পণ্যের দাম
           'price': data['price'] ?? 0,
-
-// কমিশন এখানে রাখা হচ্ছে না
-// UI-তেও দেখানো হবে না
-
-          'category': data['category'] ?? 'Product',
-
+          'category':
+          data['category'] ?? 'Product',
           'active': true,
         });
       }
-
-// --------------------------------------------------------
-// UPDATE UI
-// --------------------------------------------------------
+// ============================================================
+// UPDATE UI STATE
+// ============================================================
 
       if (!mounted) {
         return;
@@ -459,41 +647,42 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       setState(() {
         _currentVipId = vipId;
+        _isVipActive = vipActive;
 
         _completedTaskIds
           ..clear()
-          ..addAll(
-            completedIds,
-          );
-
-        _completedTasksCount = completedIds.length;
+          ..addAll(completedIds);
 
         _completedTaskList
           ..clear()
-          ..addAll(
-            completedList,
-          );
+          ..addAll(completedList);
+
+        _completedTasksCount = completedIds.length;
 
         _workTasks = tasks;
 
         _isLoadingUserData = false;
-
         _isLoadingTasks = false;
       });
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint(
+        'Dashboard loading error: $e',
+      );
+
+      debugPrint(
+        stackTrace.toString(),
+      );
+
       if (!mounted) {
         return;
       }
 
       setState(() {
         _isLoadingUserData = false;
-
         _isLoadingTasks = false;
       });
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             'তথ্য লোড করা যায়নি: $e',
@@ -508,14 +697,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 // TASK STATUS
 // ============================================================
 
-  bool _isTaskCompleted(
-    String taskId,
-  ) {
+  bool _isTaskCompleted(String taskId) {
     return _completedTaskIds.contains(taskId);
   }
 
   bool get _dailyLimitReached {
-    return _completedTasksCount >= _dailyTaskLimit;
+    return _dailyTaskLimit > 0 &&
+        _completedTasksCount >= _dailyTaskLimit;
   }
 
 // ============================================================
@@ -523,15 +711,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
 //
 // পণ্যের নাম/ক্যাটাগরি দেখে ছবি নির্বাচন করা হবে।
 // ============================================================
+
   String getAutoImageUrl(
-    String productName, {
-    String? category,
-  }) {
+      String productName, {
+        String? category,
+      }) {
     final text = '${productName.toLowerCase()} '
         '${category?.toLowerCase() ?? ''}';
 
     // ============================================================
     // PRODUCT NUMBER বের করা
+    //
     // যেমন:
     // ইলেকট্রনিক পণ্য আইটেম #41
     // ইলেকট্রনিক পণ্য আইটেম #64
@@ -543,7 +733,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     int itemNumber = 0;
 
     if (numberMatch != null) {
-      itemNumber = int.tryParse(numberMatch.group(1) ?? '0') ?? 0;
+      itemNumber =
+          int.tryParse(numberMatch.group(1) ?? '0') ?? 0;
     }
 
     // ============================================================
@@ -624,7 +815,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // ৫. ক্যামেরা
     // ============================================================
 
-    if (text.contains('camera') || text.contains('ক্যামেরা')) {
+    if (text.contains('camera') ||
+        text.contains('ক্যামেরা')) {
       final images = [
         'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=600&q=80',
         'https://images.unsplash.com/photo-1510127034890-ba27508e9f1c?auto=format&fit=crop&w=600&q=80',
@@ -910,8 +1102,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // ============================================================
     // ২১. সাধারণ ELECTRONIC পণ্য
-    //
-    // একই নাম হলেও # নম্বর অনুযায়ী আলাদা ছবি।
     // ============================================================
 
     if (text.contains('electronic') ||
@@ -932,7 +1122,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=600&q=80',
       ];
 
-      return electronicImages[itemNumber % electronicImages.length];
+      return electronicImages[
+      itemNumber % electronicImages.length
+      ];
     }
 
     // ============================================================
@@ -950,79 +1142,53 @@ class _DashboardScreenState extends State<DashboardScreen> {
       'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=600&q=80',
     ];
 
-    return generalImages[itemNumber % generalImages.length];
+    return generalImages[
+    itemNumber % generalImages.length
+    ];
   }
-
-  Widget _buildProductImage(
-    Map<String, dynamic> product,
-  ) {
-    final String name = product['name']?.toString() ?? 'পণ্য';
-
-    final String? category = product['category']?.toString();
-
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: Image.network(
-        getAutoImageUrl(
-          name,
-          category: category,
-        ),
-        width: 60,
-        height: 60,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(
-                10,
-              ),
-            ),
-            child: Icon(
-              Icons.inventory_2_outlined,
-              color: Colors.grey.shade500,
-              size: 30,
-            ),
-          );
-        },
-        loadingBuilder: (context, child, loading) {
-          if (loading == null) {
-            return child;
-          }
-
-          return Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(
-                10,
-              ),
-            ),
-            child: const Center(
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
 // ============================================================
-// PART 2 - TASK COMPLETION + WORKSPACE
+// PART 2 - TASK COMPLETION + WORKSPACE (PART 1)
 // ============================================================
 
   Future<void> _completeTask(Map<String, dynamic> task) async {
     final user = _currentUser;
-    if (user == null) return;
 
-    if (!_isVipActive ||
-        _currentVipId == 'none' ||
-        _shopDeposit <= 0) {
+    if (user == null) {
+      return;
+    }
+
+    // ========================================================
+    // WEEKEND CHECK (শুধুমাত্র শুক্রবার কাজ বন্ধ - অ্যাডমিন ছাড়া)
+    // ========================================================
+    final bool isAdminUser = _isAdmin || _currentVipId.toLowerCase() == 'admin';
+
+    final now = DateTime.now();
+    final currentDay = now.weekday; // Friday = 5
+
+    if (currentDay == DateTime.friday && !isAdminUser) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'আজ শুক্রবার, সাপ্তাহিক ছুটির কারণে আজ কোনো কাজ করা যাবে না।',
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
+      return;
+    }
+
+    // ========================================================
+    // ADMIN / VIP ACCESS CHECK
+    // ========================================================
+
+    if (!isAdminUser &&
+        (!_isVipActive ||
+            _currentVipId == 'none' ||
+            _currentVipId.isEmpty ||
+            _shopDeposit <= 0)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1036,6 +1202,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return;
     }
 
+    // ========================================================
+    // TASK ID
+    // ========================================================
+
     final String taskId = task['id']?.toString() ?? '';
 
     if (taskId.isEmpty) {
@@ -1043,117 +1213,243 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('পণ্যের ID পাওয়া যায়নি।'),
+            backgroundColor: Colors.red,
           ),
         );
       }
       return;
     }
 
-    if (_dailyLimitReached) {
+    // ========================================================
+    // DAILY TASK LIMIT (চার্ট অনুযায়ী ডাইনামিক লিমিট সেট করা হলো)
+    // ========================================================
+    int dynamicTaskLimit = _dailyTaskLimit;
+    if (!isAdminUser) {
+      String vId = _currentVipId.toLowerCase().trim();
+      if (vId == 'v1') dynamicTaskLimit = 5;
+      else if (vId == 'v2') dynamicTaskLimit = 10;
+      else if (vId == 'v3') dynamicTaskLimit = 14;
+      else if (vId == 'v4') dynamicTaskLimit = 20;
+      else if (vId == 'v5') dynamicTaskLimit = 25;
+      else if (vId == 'v6') dynamicTaskLimit = 30;
+      else if (vId == 'v7') dynamicTaskLimit = 40;
+    }
+
+    if (_completedTasksCount >= dynamicTaskLimit && !isAdminUser) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'আজকের $_dailyTaskLimit টি কাজ ইতিমধ্যে সম্পন্ন হয়েছে।',
+              'আজকের জন্য আপনার নির্ধারিত $dynamicTaskLimit টি কাজ সম্পূর্ণ হয়েছে। এর বেশি কাজ করা যাবে না।',
             ),
+            backgroundColor: Colors.orange,
           ),
         );
       }
       return;
     }
+
+    // ========================================================
+    // DUPLICATE TASK CHECK
+    // ========================================================
 
     if (_isTaskCompleted(taskId)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('এই কাজটি ইতিমধ্যে সম্পন্ন করা হয়েছে।'),
+            backgroundColor: Colors.orange,
           ),
         );
       }
       return;
     }
 
-    if (_isCompletingTask) return;
+    // ========================================================
+    // PREVENT DOUBLE CLICK
+    // ========================================================
+
+    if (_isCompletingTask) {
+      return;
+    }
 
     setState(() {
       _isCompletingTask = true;
     });
 
     try {
-      final double commission = _currentVipUnitPrice;
-      final double price = _toDouble(task['price']);
-      final String taskName = task['name']?.toString() ?? 'কাজ';
+      // ======================================================
+      // TASK INFORMATION (চার্ট অনুযায়ী সঠিক কমিশন নির্ধারণ)
+      // ======================================================
+      double calculatedCommission = _currentVipUnitPrice;
+      if (!isAdminUser) {
+        String vId = _currentVipId.toLowerCase().trim();
+        if (vId == 'v1') calculatedCommission = 20.0;
+        else if (vId == 'v2') calculatedCommission = 20.0;
+        else if (vId == 'v3') calculatedCommission = 25.0;
+        else if (vId == 'v4') calculatedCommission = 37.5;
+        else if (vId == 'v5') calculatedCommission = 42.0;
+        else if (vId == 'v6') calculatedCommission = 60.0;
+        else if (vId == 'v7') calculatedCommission = 87.5;
+      } else {
+        calculatedCommission = _currentVipUnitPrice > 0 ? _currentVipUnitPrice : 37.5;
+      }
+
+      final double commission = calculatedCommission;
+
+      final double price = _toDouble(
+        task['price'],
+      );
+
+      final String taskName =
+      task['name']?.toString().trim().isNotEmpty == true
+          ? task['name'].toString().trim()
+          : 'কাজ';
+
       final String dateKey = _todayKey();
 
-      final userRef = _firestore.collection('users').doc(user.uid);
+      final userRef = _firestore
+          .collection('users')
+          .doc(user.uid);
 
-      final completedTaskRef =
-      userRef.collection('completed_tasks').doc('${dateKey}_$taskId');
+      final completedTaskRef = userRef
+          .collection('completed_tasks')
+          .doc('${dateKey}_$taskId');
 
-      final transactionRef = userRef.collection('transactions').doc();
+      final transactionRef = userRef
+          .collection('transactions')
+          .doc();
 
-      // ফায়ারস্টোর ট্রানজ্যাকশন: কাজ সম্পন্ন, ট্রানজ্যাকশন এবং ইউজারের মেইন ব্যালেন্স আপডেট হবে
-      await _firestore.runTransaction((transaction) async {
-        final completedSnapshot = await transaction.get(completedTaskRef);
+      final earningsHistoryRef = userRef
+          .collection('earnings_history')
+          .doc();
 
-        if (completedSnapshot.exists) {
-          throw Exception('TASK_ALREADY_COMPLETED');
-        }
+      // ======================================================
+      // FIREBASE TRANSACTION
+      // ======================================================
 
-        // ইউজারের বর্তমান ডাটা ফেচ করে ব্যালেন্স হিসাব করা
-        final userSnapshot = await transaction.get(userRef);
-        double currentDbBalance = 0.0;
-        if (userSnapshot.exists) {
-          final data = userSnapshot.data() as Map<String, dynamic>;
-          currentDbBalance = _toDouble(data['shopDeposit'] ?? data['balance'] ?? 0.0);
-        }
-        double newDbBalance = currentDbBalance + commission;
+      await _firestore.runTransaction(
+            (transaction) async {
+          final completedSnapshot =
+          await transaction.get(
+            completedTaskRef,
+          );
 
-        // ১. completed_tasks এ রেকর্ড তৈরি (ডুপ্লিকেট আটকানোর জন্য)
-        transaction.set(
-          completedTaskRef,
-          {
-            'taskId': taskId,
-            'name': taskName,
-            'price': price,
-            'commission': commission,
-            'vipLevel': _currentVipId,
-            'dateKey': dateKey,
-            'completedAt': FieldValue.serverTimestamp(),
-            'userId': user.uid,
-          },
-        );
+          if (completedSnapshot.exists) {
+            throw Exception(
+              'TASK_ALREADY_COMPLETED',
+            );
+          }
 
-        // ২. transactions হিস্ট্রিতে রেকর্ড তৈরি
-        transaction.set(
-          transactionRef,
-          {
-            'type': 'task_commission',
-            'amount': commission,
-            'title': taskName,
-            'taskId': taskId,
-            'vipLevel': _currentVipId,
-            'createdAt': FieldValue.serverTimestamp(),
-            'userId': user.uid,
-          },
-        );
+          final userSnapshot =
+          await transaction.get(
+            userRef,
+          );
 
-        // ৩. ইউজারের মূল ব্যালেন্স ফায়ারস্টোরে পার্মানেন্টলি আপডেট করা (যাতে অ্যাপ রিস্টার্ট দিলেও টাকা না কমে)
-        transaction.update(userRef, {
-          'shopDeposit': newDbBalance,
-          'balance': newDbBalance,
-        });
-      });
+          if (!userSnapshot.exists) {
+            throw Exception(
+              'USER_DOCUMENT_NOT_FOUND',
+            );
+          }
 
-      if (!mounted) return;
+          final Map<String, dynamic> data =
+          userSnapshot.data()
+          as Map<String, dynamic>;
 
-      // লোকাল স্টেটে ব্যালেন্স ও ইনকাম আপডেট করা
+          final double currentBalance =
+          _toDouble(
+            data['balance'],
+          );
+
+          final double currentTodayEarnings =
+          _toDouble(
+            data['todayEarnings'],
+          );
+
+          final double currentTotalEarnings =
+          _toDouble(
+            data['totalEarnings'],
+          );
+
+          final double newBalance =
+              currentBalance + commission;
+
+          final double newTodayEarnings =
+              currentTodayEarnings + commission;
+
+          final double newTotalEarnings =
+              currentTotalEarnings + commission;
+
+          transaction.set(
+            completedTaskRef,
+            {
+              'taskId': taskId,
+              'name': taskName,
+              'price': price,
+              'commission': commission,
+              'vipLevel': _currentVipId,
+              'dateKey': dateKey,
+              'completedAt':
+              FieldValue.serverTimestamp(),
+              'userId': user.uid,
+            },
+          );
+
+          transaction.set(
+            transactionRef,
+            {
+              'type': 'task_commission',
+              'amount': commission,
+              'title': taskName,
+              'taskId': taskId,
+              'vipLevel': _currentVipId,
+              'createdAt':
+              FieldValue.serverTimestamp(),
+              'userId': user.uid,
+            },
+          );
+
+          transaction.set(
+            earningsHistoryRef,
+            {
+              'amount': commission,
+              'sourceType': 'task',
+              'description':
+              'ভিআইপি টাস্ক ($taskName) সম্পন্ন করার কমিশন বাবদ',
+              'taskId': taskId,
+              'vipLevel': _currentVipId,
+              'createdAt':
+              FieldValue.serverTimestamp(),
+              'userId': user.uid,
+            },
+          );
+
+          transaction.update(
+            userRef,
+            {
+              'balance': newBalance,
+              'todayEarnings': newTodayEarnings,
+              'totalEarnings': newTotalEarnings,
+            },
+          );
+        },
+      );
+
+      if (!mounted) {
+        return;
+      }
+
       setState(() {
-        _completedTaskIds.add(taskId);
+        _completedTaskIds.add(
+          taskId,
+        );
+
         _completedTasksCount++;
 
         _userBalance += commission;
+
         _todayEarnings += commission;
+
         _totalEarnings += commission;
 
         _completedTaskList.add(
@@ -1166,35 +1462,43 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
       });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'কাজ সম্পন্ন হয়েছে! কমিশন ৳ ${commission.toStringAsFixed(2)} যোগ হয়েছে।',
-          ),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } on FirebaseException catch (e) {
-      if (!mounted) return;
-
-      String message = 'কাজ করতে হলে আগে ডিপোজিট করে VIP লেভেল সক্রিয় করতে হবে।';
-      if (e.code == 'unavailable') {
-        message = 'ইন্টারনেট বা Firebase সংযোগ পাওয়া যাচ্ছে না।';
+      if (!mounted) {
+        return;
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
+          content: Text(
+            'কাজ সম্পন্ন হয়েছে! কমিশন ৳ ${commission.toStringAsFixed(2)} উত্তোলনযোগ্য ব্যালেন্সে যোগ হয়েছে।',
+          ),
+          backgroundColor: Colors.green,
+          duration: const Duration(
+            seconds: 4,
+          ),
         ),
       );
     } catch (e) {
-      if (!mounted) return;
+      debugPrint(
+        'Task completion error: $e',
+      );
 
-      String errMessage = e.toString();
-      if (errMessage.contains('TASK_ALREADY_COMPLETED')) {
-        errMessage = 'এই কাজটি ইতিমধ্যে সম্পন্ন করা হয়েছে।';
+      if (!mounted) {
+        return;
+      }
+
+      String errMessage =
+      e.toString();
+
+      if (errMessage.contains(
+        'TASK_ALREADY_COMPLETED',
+      )) {
+        errMessage =
+        'এই কাজটি ইতিমধ্যে সম্পন্ন করা হয়েছে।';
+      } else if (errMessage.contains(
+        'USER_DOCUMENT_NOT_FOUND',
+      )) {
+        errMessage =
+        'আপনার User Document Firebase-এ পাওয়া যায়নি।';
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1203,7 +1507,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             'কাজ সম্পন্ন করা যায়নি: $errMessage',
           ),
           backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
+          duration: const Duration(
+            seconds: 5,
+          ),
         ),
       );
     } finally {
@@ -1214,6 +1520,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     }
   }
+  // ============================================================
+// CONFIRM ORDER DIALOG
+// ============================================================
 
   void _confirmOrderDialog(
       Map<String, dynamic> product,
@@ -1222,7 +1531,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('কাজ নিশ্চিতকরণ'),
+          title: const Text(
+            'কাজ নিশ্চিতকরণ',
+          ),
           content: Text(
             '${product['name'] ?? 'কাজ'}\n\n'
                 'মূল্য: ৳ ${product['price'] ?? 0}',
@@ -1230,27 +1541,47 @@ class _DashboardScreenState extends State<DashboardScreen> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(dialogContext);
+                Navigator.pop(
+                  dialogContext,
+                );
               },
-              child: const Text('বাতিল'),
+              child: const Text(
+                'বাতিল',
+              ),
             ),
             ElevatedButton(
               onPressed: _isCompletingTask
                   ? null
                   : () {
-                Navigator.pop(dialogContext);
-                _completeTask(product);
+                Navigator.pop(
+                  dialogContext,
+                );
+
+                _completeTask(
+                  product,
+                );
               },
-              child: const Text('নিশ্চিত করুন'),
+              child: const Text(
+                'নিশ্চিত করুন',
+              ),
             ),
           ],
         );
       },
     );
   }
+
+// ============================================================
+// WORK SPACE PAGE
+// ============================================================
+
   Widget _buildWorkSpacePage() {
     return Column(
       children: [
+        // ======================================================
+        // VIP / DAILY TASK HEADER
+        // ======================================================
+
         Container(
           margin: const EdgeInsets.all(12),
           padding: const EdgeInsets.all(16),
@@ -1286,6 +1617,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -1306,7 +1638,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ],
               ),
+
               const SizedBox(height: 12),
+
               Text(
                 'আজকের সম্পন্ন কাজ: '
                     '$_completedTasksCount / $_dailyTaskLimit',
@@ -1315,13 +1649,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   fontSize: 13,
                 ),
               ),
+
               const SizedBox(height: 8),
+
               LinearProgressIndicator(
                 value: _dailyTaskLimit == 0
                     ? 0
-                    : (_completedTasksCount / _dailyTaskLimit).clamp(0.0, 1.0),
+                    : (_completedTasksCount / _dailyTaskLimit)
+                    .clamp(0.0, 1.0),
                 backgroundColor: Colors.white30,
-                valueColor: const AlwaysStoppedAnimation<Color>(
+                valueColor:
+                const AlwaysStoppedAnimation<Color>(
                   Colors.white,
                 ),
                 minHeight: 6,
@@ -1330,6 +1668,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
         ),
+
+        // ======================================================
+        // WORK TASK LIST
+        // ======================================================
+
         Expanded(
           child: _isLoadingTasks || _isLoadingUserData
               ? const Center(
@@ -1352,13 +1695,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
             child: ListView.separated(
               padding: const EdgeInsets.all(12),
               itemCount: _workTasks.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (_, __) =>
+              const SizedBox(height: 10),
               itemBuilder: (context, index) {
                 final product = _workTasks[index];
 
-                final String taskId = product['id']?.toString() ?? '';
+                final String taskId =
+                    product['id']?.toString() ?? '';
 
-                final bool completed = _isTaskCompleted(taskId);
+                final bool completed =
+                _isTaskCompleted(taskId);
 
                 return Container(
                   padding: const EdgeInsets.all(12),
@@ -1366,7 +1712,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     color: completed
                         ? Colors.green.shade50
                         : Colors.white,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius:
+                    BorderRadius.circular(12),
                     border: Border.all(
                       color: completed
                           ? Colors.green.shade100
@@ -1375,95 +1722,161 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   child: Row(
                     children: [
+                      // ==================================
+                      // PRODUCT IMAGE
+                      // ==================================
+
                       Container(
                         width: 58,
                         height: 58,
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius:
+                          BorderRadius.circular(10),
                           image: DecorationImage(
                             image: NetworkImage(
                               getAutoImageUrl(
-                                product['name']?.toString() ?? '',
+                                product['name']
+                                    ?.toString() ??
+                                    '',
                               ),
                             ),
                             fit: BoxFit.cover,
                           ),
                         ),
                       ),
+
                       const SizedBox(width: 12),
+
+                      // ==================================
+                      // PRODUCT INFORMATION
+                      // ==================================
+
                       Expanded(
                         child: Column(
                           crossAxisAlignment:
                           CrossAxisAlignment.start,
                           children: [
                             Text(
-                              product['name']?.toString() ?? 'পণ্য',
+                              product['name']
+                                  ?.toString() ??
+                                  'পণ্য',
                               style: const TextStyle(
                                 fontSize: 13,
-                                fontWeight: FontWeight.bold,
+                                fontWeight:
+                                FontWeight.bold,
                                 color: Colors.black87,
                               ),
                               maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+                              overflow:
+                              TextOverflow.ellipsis,
                             ),
+
                             const SizedBox(height: 6),
+
                             Text(
                               'দাম: ৳ ${product['price'] ?? 0}',
                               style: TextStyle(
-                                color: Colors.grey.shade700,
+                                color:
+                                Colors.grey.shade700,
                                 fontSize: 12,
-                                fontWeight: FontWeight.w600,
+                                fontWeight:
+                                FontWeight.w600,
                               ),
                             ),
                           ],
                         ),
                       ),
+
                       const SizedBox(width: 8),
+
+                      // ==================================
+                      // COMPLETED / ACTION BUTTON
+                      // ==================================
+
                       completed
                           ? Container(
-                        padding: const EdgeInsets.symmetric(
+                        padding:
+                        const EdgeInsets
+                            .symmetric(
                           horizontal: 10,
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.green.shade100,
+                          color:
+                          Colors.green.shade100,
                           borderRadius:
-                          BorderRadius.circular(12),
+                          BorderRadius.circular(
+                            12,
+                          ),
                         ),
                         child: Text(
                           'সম্পন্ন',
                           style: TextStyle(
-                            color: Colors.green.shade800,
+                            color: Colors
+                                .green.shade800,
                             fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                            fontWeight:
+                            FontWeight.bold,
                           ),
                         ),
                       )
                           : IconButton(
-                        onPressed: _isCompletingTask
+                        onPressed:
+                        _isCompletingTask
                             ? null
                             : () {
-                          if (!_isVipActive ||
-                              _currentVipId == null ||
-                              _currentVipId.isEmpty ||
-                              _currentVipId == 'none' ||
-                              _shopDeposit <= 0) {
-                            ScaffoldMessenger.of(context)
-                                .showSnackBar(
+                          // ==================================
+                          // ADMIN CHECK
+                          // ==================================
+
+                          final bool
+                          effectiveAdmin =
+                              _isAdmin ||
+                                  _currentVipId
+                                      .toLowerCase() ==
+                                      'admin';
+
+                          // ==================================
+                          // VIP / DEPOSIT CHECK
+                          // ==================================
+
+                          if (!effectiveAdmin &&
+                              (!_isVipActive ||
+                                  _currentVipId ==
+                                      'none' ||
+                                  _currentVipId
+                                      .isEmpty ||
+                                  _shopDeposit <=
+                                      0)) {
+                            ScaffoldMessenger
+                                .of(
+                              context,
+                            ).showSnackBar(
                               const SnackBar(
                                 content: Text(
-                                    'কাজ করতে হলে আগে ডিপোজিট করে VIP লেভেল সক্রিয় করতে হবে।'),
+                                  'কাজ করতে হলে আগে ডিপোজিট করে VIP লেভেল সক্রিয় করতে হবে।',
+                                ),
                                 backgroundColor:
                                 Colors.red,
                               ),
                             );
-                          } else {
-                            _confirmOrderDialog(product);
+
+                            return;
                           }
+
+                          // ==================================
+                          // OPEN CONFIRMATION
+                          // ==================================
+
+                          _confirmOrderDialog(
+                            product,
+                          );
                         },
-                        icon: const CircleAvatar(
+                        icon:
+                        const CircleAvatar(
                           radius: 16,
-                          backgroundColor: Colors.redAccent,
+                          backgroundColor:
+                          Colors.redAccent,
                           child: Icon(
                             Icons.add,
                             color: Colors.white,
@@ -1479,6 +1892,73 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ],
+    );
+  }
+// ============================================================
+// PRODUCT IMAGE WIDGET
+// ============================================================
+  Widget _buildProductImage(
+      Map<String, dynamic> product,
+      ) {
+    final String name =
+        product['name']?.toString() ?? 'পণ্য';
+
+    final String? category =
+    product['category']?.toString();
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Image.network(
+        getAutoImageUrl(
+          name,
+          category: category,
+        ),
+        width: 60,
+        height: 60,
+        fit: BoxFit.cover,
+        errorBuilder: (
+            context,
+            error,
+            stackTrace,
+            ) {
+          return Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.inventory_2_outlined,
+              color: Colors.grey.shade500,
+              size: 30,
+            ),
+          );
+        },
+        loadingBuilder: (
+            context,
+            child,
+            loading,
+            ) {
+          if (loading == null) {
+            return child;
+          }
+
+          return Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 // ============================================================
@@ -1585,6 +2065,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                       onPressed: () {
+                        // মানিব্যাগে প্রবেশ করার জন্য WalletScreen এ পাঠানো হলো
                         Navigator.push(
                           context,
                           MaterialPageRoute(

@@ -101,7 +101,7 @@ class _DepositScreenState extends State<DepositScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('সফলভাবে জমা হয়েছে!'),
-          content: Text('আপনার $selectedMethod এর মাধ্যমে ৳$amount জমার রিকোয়েস্ট সাবমিট হয়েছে। TxnID: $txnId। অ্যাডমিন অনুমোদন করলে ব্যালেন্স যোগ হবে।'),
+          content: Text('আপনার $selectedMethod এর মাধ্যমে ৳$amount জমার রিকোয়েস্ট সাবমিট হয়েছে। TxnID: $txnId। অ্যাডমিন অনুমোদন করলে জামানত যোগ হবে।'),
           actions: [
             TextButton(
               onPressed: () {

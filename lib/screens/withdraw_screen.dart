@@ -1,8 +1,15 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class WithdrawScreen extends StatefulWidget {
-  const WithdrawScreen({super.key});
+  final double userBalance; // ড্যাশবোর্ড থেকে ব্যালেন্স রিসিভ করার জন্য
+
+  const WithdrawScreen({
+    super.key,
+    required this.userBalance,
+  });
 
   @override
   State<WithdrawScreen> createState() => _WithdrawScreenState();
@@ -10,20 +17,22 @@ class WithdrawScreen extends StatefulWidget {
 
 class _WithdrawScreenState extends State<WithdrawScreen> {
   String selectedMethod = 'bKash';
+  late double availableBalance;
 
-  // নতুন অ্যাকাউন্ট হওয়ার কারণে ব্যালেন্স ০ করা হলো
-  final double availableBalance = 0.00;
-
-  // বাকি কন্ট্রোলার ও কোড আগের মতোই থাকবে...
-
-  // কন্ট্রোলারসমূহ (অ্যামাউন্ট ফিল্ডটি এখন লকড থাকবে)
   final TextEditingController _accountController = TextEditingController();
-  final TextEditingController _amountController = TextEditingController(text: '400'); // ডিফল্ট ৪০০ টাকা সেট করা
+  final TextEditingController _amountController = TextEditingController(text: '400');
   final TextEditingController _passwordController = TextEditingController();
 
   bool _isLoading = false;
+  bool _checkingSettings = true;
+  bool _isAdmin = false; // অ্যাডমিন স্ট্যাটাস চেক করার জন্য
 
-  // আপনার দেওয়া নির্দিষ্ট অ্যামাউন্টগুলোর তালিকা
+  // Admin Global Settings Variables for Withdrawal
+  bool _withdrawalActive = true;
+  bool _closeWithdrawalAfter5PM = false; // ভেরিয়েবলের নাম আগের মতোই রাখা হয়েছে
+  bool _closeWithdrawalFriday = false;
+  bool _closeWithdrawalSaturday = false;
+
   final List<double> quickAmounts = [
     400,
     1000,
@@ -37,6 +46,51 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    availableBalance = widget.userBalance; // ড্যাশবোর্ডের ব্যালেন্স এখানে সেট করা হলো
+    _checkAdminAndFetchSettings();
+  }
+
+  // ফায়ারবেস থেকে অ্যাডমিন স্ট্যাটাস এবং গ্লোবাল সেটিংস লোড করা
+  Future<void> _checkAdminAndFetchSettings() async {
+    try {
+      final User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        final userDoc = await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).get();
+        if (userDoc.exists) {
+          final userData = userDoc.data();
+          if (userData != null && (userData['isAdmin'] == true || userData['role'] == 'admin')) {
+            setState(() {
+              _isAdmin = true;
+            });
+          }
+        }
+      }
+
+      final doc = await FirebaseFirestore.instance.collection('admin_settings').doc('global_config').get();
+      if (doc.exists) {
+        final data = doc.data() as Map<String, dynamic>;
+        setState(() {
+          _withdrawalActive = data['withdrawalActive'] ?? true;
+          _closeWithdrawalAfter5PM = data['closeWithdrawalAfter5PM'] ?? false;
+          _closeWithdrawalFriday = data['closeWithdrawalFriday'] ?? false;
+          _closeWithdrawalSaturday = data['closeWithdrawalSaturday'] ?? false;
+          _checkingSettings = false;
+        });
+      } else {
+        setState(() {
+          _checkingSettings = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _checkingSettings = false;
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _accountController.dispose();
     _amountController.dispose();
@@ -44,14 +98,55 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
     super.dispose();
   }
 
+  // উত্তোলন বন্ধ বা ছুটির দিন চেক করার ফাংশন (অ্যাডমিন হলে বাইপাস হয়ে যাবে)
+  bool _isWithdrawalRestricted() {
+    if (_isAdmin) {
+      return false; // অ্যাডমিন হলে কোনো রেস্ট্রিকশন কাজ করবে না
+    }
+
+    if (!_withdrawalActive) {
+      return true;
+    }
+
+    final now = DateTime.now();
+    final weekday = now.weekday; // Monday = 1, ... Friday = 5, Saturday = 6, Sunday = 7
+    final hour = now.hour; // ২৪ ঘণ্টার ফরম্যাটে বর্তমান ঘণ্টা (0 - 23)
+
+    // ১. শুক্রবার (Friday = 5) এবং অ্যাডমিন প্যানেলে শুক্রবার বন্ধের অপশন অন থাকলে
+    if (weekday == DateTime.friday && _closeWithdrawalFriday) {
+      return true;
+    }
+
+    // ২. শনিবার (Saturday = 6) এবং অ্যাডমিন প্যানেলে শনিবার বন্ধের অপশন অন থাকলে
+    if (weekday == DateTime.saturday && _closeWithdrawalSaturday) {
+      return true;
+    }
+
+    // ৩. সকাল ৯:০০ টার আগে (< 9) অথবা সন্ধ্যা ৬:০০ টার পরে (>= 18) এবং অ্যাডমিন প্যানেলের সময়সীমার নিয়ম অন থাকলে
+    if (_closeWithdrawalAfter5PM && (hour < 9 || hour >= 18)) {
+      return true;
+    }
+
+    return false;
+  }
+
   void _submitWithdrawal() async {
+    if (_isWithdrawalRestricted()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('আজকে ছুটির দিন বা সময় শেষ, উত্তোলন বন্ধ রয়েছে।'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     FocusScope.of(context).unfocus();
 
     String accountNumber = _accountController.text.trim();
     String amountStr = _amountController.text.trim();
     String password = _passwordController.text.trim();
 
-    // ভ্যালিডেশন
     if (accountNumber.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('দয়া করে আপনার $selectedMethod অ্যাকাউন্ট নম্বর দিন')),
@@ -92,7 +187,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
       _isLoading = true;
     });
 
-    // প্রসেসিং সিমুলেশন (২ সেকেন্ড)
     await Future.delayed(const Duration(seconds: 2));
 
     if (!mounted) return;
@@ -101,11 +195,9 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
       _isLoading = false;
     });
 
-    // হিসাব: ১০% প্রসেসিং ফি বাদ দিয়ে প্রকৃত পরিমাণ
     double fee = amount * 0.10;
     double netAmount = amount - fee;
 
-    // সফল ডায়ালগ দেখানো
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -116,8 +208,8 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // ডায়ালগ বন্ধ করবে
-              Navigator.pop(context); // আগের স্ক্রিনে ফিরে যাবে
+              Navigator.pop(context);
+              Navigator.pop(context);
             },
             child: const Text('ঠিক আছে', style: TextStyle(fontWeight: FontWeight.bold)),
           ),
@@ -141,24 +233,53 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
   @override
   Widget build(BuildContext context) {
     double currentEnteredAmount = double.tryParse(_amountController.text) ?? 0.0;
-
-    // ফি ক্যালকুলেশন (১০%)
     double processingFee = currentEnteredAmount * 0.10;
     double netReceiveAmount = currentEnteredAmount - processingFee;
+
+    bool isClosedNow = _isWithdrawalRestricted();
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
       appBar: AppBar(
-        title: const Text('ট্রান্সফার করুন', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(
+          _isAdmin ? 'ট্রান্সফার করুন (অ্যাডমিন মোড)' : 'ট্রান্সফার করুন',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
         backgroundColor: Colors.blue.shade600,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView(
+      body: _checkingSettings
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ১. উত্তোলনযোগ্য টাকার পরিমাণ কার্ড
+            if (isClosedNow) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.red.shade300),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.warning, color: Colors.red),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'আজকে ছুটির দিন অথবা সকাল ৯টা থেকে সন্ধ্যা ৬টার বাইরে সময় হওয়ায় উত্তোলন বন্ধ রয়েছে।',
+                        style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -184,7 +305,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             ),
             const SizedBox(height: 20),
 
-            // ২. ই-মানিব্যাগ সেকশন (Nagad ও bKash)
             const Text(
               'ই-মানিব্যাগ',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
@@ -199,7 +319,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             ),
             const SizedBox(height: 15),
 
-            // অ্যাকাউন্ট নম্বর ইনপুট ফিল্ড
             TextField(
               controller: _accountController,
               keyboardType: TextInputType.phone,
@@ -213,7 +332,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             ),
             const SizedBox(height: 20),
 
-            // ৩. নির্ধারিত অ্যামাউন্ট অপশনসমূহ (শুধু ক্লিক করে সিলেক্ট করার জন্য)
             const Text(
               'উত্তোলনের পরিমাণ সিলেক্ট করুন (নিচের অপশন থেকে):',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
@@ -243,10 +361,9 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ৪. অ্যামাউন্ট ডিসপ্লে বক্স (এটি সম্পূর্ণ Read-Only / লক করা, কেউ লিখে চেঞ্জ করতে পারবে না)
             TextField(
               controller: _amountController,
-              readOnly: true, // ইউজার এখানে টাইপ করতে পারবে না
+              readOnly: true,
               decoration: InputDecoration(
                 labelText: 'নির্বাচিত উত্তোলনের পরিমাণ',
                 prefixText: '৳ ',
@@ -257,7 +374,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ৫. হিসাব বিবরণী বক্স
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -295,7 +411,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             ),
             const SizedBox(height: 16),
 
-            // ৬. লেনদেন পাসওয়ার্ড ইনপুট
             const Text(
               'লেনদেন পাসওয়ার্ড',
               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
@@ -314,7 +429,6 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
             ),
             const SizedBox(height: 24),
 
-            // সাবমিট বাটন
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -323,19 +437,21 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-                onPressed: _isLoading ? null : _submitWithdrawal,
+                onPressed: (_isLoading || isClosedNow) ? null : _submitWithdrawal,
                 child: _isLoading
                     ? const SizedBox(
                   height: 20,
                   width: 20,
                   child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                 )
-                    : const Text('উত্তোলন সম্পূর্ণ করুন', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    : Text(
+                  isClosedNow ? 'উত্তোলন বন্ধ রয়েছে' : 'উত্তোলন সম্পূর্ণ করুন',
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
             const SizedBox(height: 24),
 
-            // ৭. সদয় টিপস এবং সাপোর্ট সেকশন
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -352,7 +468,7 @@ class _WithdrawScreenState extends State<WithdrawScreen> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'দোকান খোলার সময়: সোমবার থেকে বৃহস্পতিবার, রবিবার 09:00-18:00\nহ্যান্ডলিং ফি: টাকা তোলার সময় ১০% হ্যান্ডলিং ফি প্রয়োজন, যা ট্যাক্স ফাইলিং এবং অন্যান্য খরচের জন্য ব্যবহৃত হয়!',
+                    'উত্তোলনের সময়: শুক্রবার, শনিবার এবং প্রতিদিন সকাল ৯টার আগে ও সন্ধ্যা ৬টার পর উত্তোলন বন্ধ থাকে।',
                     style: TextStyle(fontSize: 12, color: Colors.black54, height: 1.4),
                   ),
                   const SizedBox(height: 12),

@@ -1,4 +1,4 @@
-import 'dart:math';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:confetti/confetti.dart';
@@ -30,8 +30,6 @@ class _LuckySpinScreenState extends State<LuckySpinScreen>
     '100',
     '1000',
   ];
-
-  int _winningIndex = 0;
 
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -68,7 +66,7 @@ class _LuckySpinScreenState extends State<LuckySpinScreen>
         });
       }
     } catch (e) {
-      print('Error fetching user data: $e');
+      debugPrint('Error fetching user data: $e');
     }
   }
 
@@ -128,13 +126,7 @@ class _LuckySpinScreenState extends State<LuckySpinScreen>
       return;
     }
 
-    final docRef = _firestore
-        .collection('users')
-        .doc(user.uid);
-
-    // ==========================================================
-    // ১. Firestore থেকে সর্বশেষ Spin Count নেওয়া
-    // ==========================================================
+    final docRef = _firestore.collection('users').doc(user.uid);
 
     int freshSpins = 0;
 
@@ -151,19 +143,13 @@ class _LuckySpinScreenState extends State<LuckySpinScreen>
         return;
       }
 
-      final data =
-      doc.data() as Map<String, dynamic>?;
+      final data = doc.data() as Map<String, dynamic>?;
 
-      freshSpins =
-      (data?['luckySpinCount'] ?? 0) is num
+      freshSpins = (data?['luckySpinCount'] ?? 0) is num
           ? (data?['luckySpinCount'] ?? 0).toInt()
-          : int.tryParse(
-        '${data?['luckySpinCount'] ?? 0}',
-      ) ??
-          0;
+          : int.tryParse('${data?['luckySpinCount'] ?? 0}') ?? 0;
     } catch (e) {
       debugPrint('Spin count read error: $e');
-
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('ডাটা ফেচ করতে সমস্যা হয়েছে!'),
@@ -173,138 +159,49 @@ class _LuckySpinScreenState extends State<LuckySpinScreen>
       return;
     }
 
-    // ==========================================================
-    // ২. Spin না থাকলে বন্ধ
-    // ==========================================================
-
     if (freshSpins <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'আপনার পর্যাপ্ত স্পিন নেই! রেফার করুন।',
-          ),
+          content: Text('আপনার পর্যাপ্ত স্পিন নেই! রেফার করুন।'),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
-    // ==========================================================
-    // ৩. শুধুমাত্র ৳50 এবং ৳20 অনুমোদিত
-    //
-    // prizes list:
-    //
-    // index 0 = ৳50
-    // index 1 = ৳3000
-    // index 2 = ৳20
-    // index 3 = ৳5000
-    // index 4 = ৳150
-    // index 5 = ৳2500
-    // index 6 = ৳100
-    // index 7 = ৳1000
-    //
-    // তাই:
-    // 0 = ৳50
-    // 2 = ৳20
-    // ==========================================================
-
+    // শুধুমাত্র ৳50 (index 0) এবং ৳20 (index 2) ফিক্সড রাখা হলো
     const List<int> allowedIndices = [0, 2];
+    final int selectedIndex = allowedIndices[math.Random().nextInt(allowedIndices.length)];
 
-    final int selectedIndex =
-    allowedIndices[
-    Random().nextInt(
-      allowedIndices.length,
-    )
-    ];
-
-    // ==========================================================
-    // ৪. নির্বাচিত ঘরের Prize
-    // ==========================================================
-
-    final String wonAmountStr =
-    prizes[selectedIndex];
-
-    final double wonAmount =
-        double.tryParse(wonAmountStr) ?? 0.0;
-
-    debugPrint(
-      'Selected Index: $selectedIndex',
-    );
-
-    debugPrint(
-      'Selected Prize: ৳$wonAmountStr',
-    );
-
-    // ==========================================================
-    // ৫. Spin শুরু
-    // ==========================================================
+    final String wonAmountStr = prizes[selectedIndex];
+    final double wonAmount = double.tryParse(wonAmountStr) ?? 0.0;
 
     setState(() {
       isSpinning = true;
       remainingSpins = freshSpins - 1;
-      selectedPrizeText =
-      'স্পিন হচ্ছে...';
+      selectedPrizeText = 'স্পিন হচ্ছে...';
     });
 
-    // ==========================================================
-    // ৬. Wheel Angle Calculation
-    //
-    // WheelPainter-এর প্রথম ঘর 0° থেকে শুরু হয়।
-    // Pointer থাকে -90° অর্থাৎ উপরে।
-    //
-    // তাই selected segment-এর CENTER
-    // pointer-এর ঠিক নিচে আনার জন্য:
-    //
-    // target = pointerAngle - segmentCenter
-    //
-    // ==========================================================
+    final double segmentAngle = (2 * math.pi) / prizes.length;
+    final double segmentCenter = selectedIndex * segmentAngle + (segmentAngle / 2);
+    const double pointerAngle = -math.pi / 2;
 
-    final double segmentAngle =
-        (2 * pi) / prizes.length;
-
-    final double segmentCenter =
-        selectedIndex * segmentAngle +
-            (segmentAngle / 2);
-
-    const double pointerAngle =
-        -pi / 2;
-
-    double targetAngle =
-        pointerAngle - segmentCenter;
-
-    // 0 থেকে 2π-এর মধ্যে আনা
-    targetAngle %= (2 * pi);
+    double targetAngle = pointerAngle - segmentCenter;
+    targetAngle %= (2 * math.pi);
 
     if (targetAngle < 0) {
-      targetAngle += 2 * pi;
+      targetAngle += 2 * math.pi;
     }
 
-    // ==========================================================
-    // ৭. বর্তমান অবস্থান থেকে সঠিক Target পর্যন্ত যাওয়া
-    // ==========================================================
-
-    final double currentNormalized =
-        _currentAngle % (2 * pi);
-
-    double rotationNeeded =
-        targetAngle - currentNormalized;
+    final double currentNormalized = _currentAngle % (2 * math.pi);
+    double rotationNeeded = targetAngle - currentNormalized;
 
     if (rotationNeeded < 0) {
-      rotationNeeded += 2 * pi;
+      rotationNeeded += 2 * math.pi;
     }
 
-    // ৬-৯ বার সম্পূর্ণ ঘুরবে
-    final int extraRotations =
-        6 + Random().nextInt(4);
-
-    final double finalAngle =
-        _currentAngle +
-            (extraRotations * 2 * pi) +
-            rotationNeeded;
-
-    // ==========================================================
-    // ৮. Animation
-    // ==========================================================
+    final int extraRotations = 6 + math.Random().nextInt(4);
+    final double finalAngle = _currentAngle + (extraRotations * 2 * math.pi) + rotationNeeded;
 
     _animation = Tween<double>(
       begin: _currentAngle,
@@ -317,141 +214,92 @@ class _LuckySpinScreenState extends State<LuckySpinScreen>
     );
 
     _controller.reset();
-
     await _controller.forward();
 
     if (!mounted) return;
 
-    // ==========================================================
-    // ৯. Spin শেষ হওয়ার পর Firestore-এ Spin কমানো
-    // ==========================================================
-
     bool updateSuccessful = false;
 
     try {
-      await _firestore.runTransaction(
-            (transaction) async {
-          final snapshot =
-          await transaction.get(docRef);
+      await _firestore.runTransaction((transaction) async {
+        final snapshot = await transaction.get(docRef);
 
-          if (!snapshot.exists) {
-            throw Exception(
-              'User document not found',
-            );
-          }
+        if (!snapshot.exists) {
+          throw Exception('User document not found');
+        }
 
-          final data =
-          snapshot.data()
-          as Map<String, dynamic>;
+        final data = snapshot.data() as Map<String, dynamic>;
 
-          final int latestSpins =
-          (data['luckySpinCount'] ?? 0) is num
-              ? (data['luckySpinCount'] ?? 0)
-              .toInt()
-              : int.tryParse(
-            '${data['luckySpinCount'] ?? 0}',
-          ) ??
-              0;
+        final int latestSpins = (data['luckySpinCount'] ?? 0) is num
+            ? (data['luckySpinCount'] ?? 0).toInt()
+            : int.tryParse('${data['luckySpinCount'] ?? 0}') ?? 0;
 
-          if (latestSpins <= 0) {
-            throw Exception(
-              'No spins available',
-            );
-          }
+        if (latestSpins <= 0) {
+          throw Exception('No spins available');
+        }
 
-          final dynamic balanceValue =
-              data['balance'] ?? 0;
+        final dynamic balanceValue = data['balance'] ?? 0;
+        final double currentBalance = balanceValue is num
+            ? balanceValue.toDouble()
+            : double.tryParse('$balanceValue') ?? 0.0;
 
-          final double currentBalance =
-          balanceValue is num
-              ? balanceValue.toDouble()
-              : double.tryParse(
-            '$balanceValue',
-          ) ??
-              0.0;
+        final double newBalance = currentBalance + wonAmount;
 
-          final double newBalance =
-              currentBalance + wonAmount;
+        // ১. মূল ইউজারের ব্যালেন্স এবং স্পিন কাউন্ট আপডেট
+        transaction.update(
+          docRef,
+          {
+            'luckySpinCount': latestSpins - 1,
+            'balance': newBalance,
+          },
+        );
 
-          transaction.update(
-            docRef,
-            {
-              'luckySpinCount':
-              latestSpins - 1,
-              'balance':
-              newBalance,
-            },
-          );
+        // ২. ট্রানজ্যাকশনের ভেতর ইউজারের earnings_history সাব-কালেকশনে রেকর্ড যুক্ত করা
+        final earningsHistoryRef = docRef.collection('earnings_history').doc();
+        transaction.set(earningsHistoryRef, {
+          'amount': wonAmount,
+          'sourceType': 'lucky_spin',
+          'description': 'লাকি স্পিন থেকে প্রাপ্ত পুরস্কার: ৳$wonAmountStr',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
 
-          updateSuccessful = true;
-        },
-      );
+        updateSuccessful = true;
+      });
     } catch (e) {
-      debugPrint(
-        'Final spin transaction error: $e',
-      );
+      debugPrint('Final spin transaction error: $e');
     }
-
-    // ==========================================================
-    // ১০. Transaction সফল না হলে Result দেখাবে না
-    // ==========================================================
 
     if (!updateSuccessful) {
       setState(() {
         isSpinning = false;
         remainingSpins = freshSpins;
-        _currentAngle =
-            finalAngle % (2 * pi);
-        selectedPrizeText =
-        'স্পিন সম্পন্ন হয়নি। আবার চেষ্টা করুন।';
+        _currentAngle = finalAngle % (2 * math.pi);
+        selectedPrizeText = 'স্পিন সম্পন্ন হয়নি। আবার চেষ্টা করুন।';
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text(
-            'স্পিন সম্পন্ন করতে সমস্যা হয়েছে। টাকা যোগ করা হয়নি।',
-          ),
+          content: Text('স্পিন সম্পন্ন করতে সমস্যা হয়েছে। টাকা যোগ করা হয়নি।'),
           backgroundColor: Colors.red,
         ),
       );
-
       return;
     }
 
-    // ==========================================================
-    // ১১. UI-তে একই Prize দেখানো
-    // ==========================================================
-
     setState(() {
       isSpinning = false;
-
-      _currentAngle =
-          finalAngle % (2 * pi);
-
-      remainingSpins =
-          freshSpins - 1;
-
+      _currentAngle = finalAngle % (2 * math.pi);
+      remainingSpins = freshSpins - 1;
       balance += wonAmount;
-
-      selectedPrizeText =
-      '🎉 অভিনন্দন! আপনি জিতেছেন: ৳$wonAmountStr';
+      selectedPrizeText = '🎉 অভিনন্দন! আপনি জিতেছেন: ৳$wonAmountStr';
 
       spinHistory.insert(
         0,
-        '${DateTime.now().toString().substring(0, 16)}'
-            ' - জিতেছেন ৳$wonAmountStr',
+        '${DateTime.now().toString().substring(0, 16)} - জিতেছেন ৳$wonAmountStr',
       );
     });
 
-    // ==========================================================
-    // ১২. Confetti
-    // ==========================================================
-
     _confettiController.play();
-
-    // ==========================================================
-    // ১৩. Popup-এ ঠিক একই Prize
-    // ==========================================================
 
     if (!mounted) return;
 
@@ -460,30 +308,16 @@ class _LuckySpinScreenState extends State<LuckySpinScreen>
       builder: (context) => AlertDialog(
         title: const Row(
           children: [
-            Icon(
-              Icons.emoji_events,
-              color: Colors.amber,
-            ),
+            Icon(Icons.emoji_events, color: Colors.amber),
             SizedBox(width: 8),
-            Text(
-              'অভিনন্দন!',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Text('অভিনন্দন!', style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'আপনি জিতেছেন:',
-              style: TextStyle(
-                color: Colors.grey.shade600,
-              ),
-            ),
+            Text('আপনি জিতেছেন:', style: TextStyle(color: Colors.grey.shade600)),
             const SizedBox(height: 5),
             Text(
               '৳$wonAmountStr',
@@ -504,9 +338,7 @@ class _LuckySpinScreenState extends State<LuckySpinScreen>
             child: const Text('শেয়ার করুন'),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
+            onPressed: () => Navigator.pop(context),
             child: const Text('ঠিক আছে'),
           ),
         ],
@@ -593,7 +425,6 @@ class _LuckySpinScreenState extends State<LuckySpinScreen>
                   ),
                 ),
                 const SizedBox(height: 20),
-
                 SizedBox(
                   height: 330,
                   width: 330,
@@ -644,7 +475,6 @@ class _LuckySpinScreenState extends State<LuckySpinScreen>
                   ),
                 ),
                 const SizedBox(height: 20),
-
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
                   decoration: BoxDecoration(
@@ -659,7 +489,6 @@ class _LuckySpinScreenState extends State<LuckySpinScreen>
                   ),
                 ),
                 const SizedBox(height: 20),
-
                 Row(
                   children: [
                     Expanded(
@@ -724,7 +553,10 @@ class _LuckySpinScreenState extends State<LuckySpinScreen>
   }
 }
 
-// ============ Wheel Painter ============
+// ============================================================
+// PART 2: PAINTER CLASSES (Wheel & Pointer)
+// ============================================================
+
 class WheelPainter extends CustomPainter {
   final List<String> prizes;
   WheelPainter({required this.prizes});
@@ -734,7 +566,7 @@ class WheelPainter extends CustomPainter {
     double center = size.width / 2;
     Rect rect = Rect.fromCircle(center: Offset(center, center), radius: center);
     Paint paint = Paint()..style = PaintingStyle.fill;
-    double angleStep = 2 * pi / prizes.length;
+    double angleStep = 2 * math.pi / prizes.length;
 
     final List<Color> colors = [
       Colors.teal,
@@ -767,12 +599,10 @@ class WheelPainter extends CustomPainter {
       canvas.restore();
     }
   }
-
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
-// ============ Pointer Triangle ============
 class TrianglePointerPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {

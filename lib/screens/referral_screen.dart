@@ -8,6 +8,38 @@ class ReferralScreen extends StatefulWidget {
 
   @override
   State<ReferralScreen> createState() => _ReferralScreenState();
+
+  // ============================================================
+  // রেফারেল বোনাস প্রদান করার স্ট্যাটিক ফাংশন
+  // (যেখান থেকে বোনাস দেওয়া হবে, সেখানে এই ফাংশনটি কল করা যাবে)
+  // ============================================================
+  static Future<void> addReferralBonus({
+    required String referrerUserId,
+    required double bonusAmount,
+    required String referredUserName,
+  }) async {
+    if (referrerUserId.isEmpty || bonusAmount <= 0) return;
+
+    final referrerRef = FirebaseFirestore.instance.collection('users').doc(referrerUserId);
+    final earningsHistoryRef = referrerRef.collection('earnings_history').doc();
+
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      // ১. মূল রেফারারের ব্যালেন্স ও আয়ের হিসাব আপডেট
+      transaction.update(referrerRef, {
+        'balance': FieldValue.increment(bonusAmount),
+        'totalIncome': FieldValue.increment(bonusAmount),
+        'todayIncome': FieldValue.increment(bonusAmount),
+      });
+
+      // ২. অ্যানালিটিক্সের জন্য 'earnings_history' এ বাংলা বিবরণসহ সেভ করা
+      transaction.set(earningsHistoryRef, {
+        'amount': bonusAmount,
+        'sourceType': 'referral',
+        'description': 'রেফারেল বোনাস ($referredUserName এর একাউন্ট থেকে প্রাপ্ত)',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
 }
 
 class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProviderStateMixin {
@@ -202,7 +234,7 @@ class _ReferralScreenState extends State<ReferralScreen> with SingleTickerProvid
                             const SnackBar(content: Text('রেফারেল লিংক সফলভাবে কপি করা হয়েছে!'), backgroundColor: Colors.green),
                           );
                         },
-                        child: const Text('কپی করুন'),
+                        child: const Text('কপি করুন'),
                       ),
                     ],
                   ),

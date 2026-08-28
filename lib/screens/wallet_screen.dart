@@ -92,7 +92,7 @@ class WalletScreen extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
 
-                // উত্তোলন বাটন (WithdrawScreen এ যাওয়ার নেভিগেশন যুক্ত করা হয়েছে)
+                // উত্তোলন বাটন (WithdrawScreen এ ব্যালেন্স পাস করা হয়েছে)
                 Expanded(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
@@ -103,7 +103,11 @@ class WalletScreen extends StatelessWidget {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const WithdrawScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => WithdrawScreen(
+                            userBalance: balance, // ওয়ালেটের ব্যালেন্স এখানে সফলভাবে পাস করা হলো
+                          ),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.remove_circle_outline, color: Colors.white),

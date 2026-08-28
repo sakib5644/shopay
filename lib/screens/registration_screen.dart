@@ -200,7 +200,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           'loginEmail': loginEmail,
           'balance': 0.0,
           'shopDeposit': 0.0,
-          'vipLevel': 'V1',
+          'vipLevel': 'none',
           'luckyDrawChances': 0,
           'status': 'active',
           'referredBy': referrerRef != null ? referralId : 'none',
@@ -210,11 +210,27 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 // ১. নতুন ইউজারের ডকুমেন্ট সেট করা
         transaction.set(newUserRef, userData);
 
-// ২. যদি সঠিক রেফারার থাকে, তবে তার মেম্বার কাউন্ট ১ বাড়িয়ে দেওয়া
+// ২. যদি সঠিক রেফারার থাকে, তবে তার মেম্বার কাউন্ট এবং চাইলে রেফারেল বোনাস যোগ করা
         if (referrerRef != null) {
+          // আপনি চাইলে এখানে রেফার করার জন্য নির্দিষ্ট পরিমাণ বোনাস (যেমন: ১০ টাকা) সেট করতে পারেন
+          // double referralBonus = 10.0;
+
           transaction.update(referrerRef, {
             'referredMembers': FieldValue.increment(1),
+            // যদি রেজিস্ট্রেশনের সাথেই বোনাস যোগ করতে চান, তবে নিচের কমেন্টগুলো তুলেও দিতে পারেন:
+            // 'balance': FieldValue.increment(referralBonus),
+            // 'totalIncome': FieldValue.increment(referralBonus),
+            // 'todayIncome': FieldValue.increment(referralBonus),
           });
+
+          // ৩. অ্যানালিটিক্সের জন্য রেফারারের earnings_history সাব-কালেকশনে রেকর্ড যুক্ত করা
+          // const earningsHistoryRef = _firestore.collection('users').doc(referralId).collection('earnings_history').doc();
+          // transaction.set(earningsHistoryRef, {
+          //   'amount': referralBonus,
+          //   'sourceType': 'referral',
+          //   'description': 'রেফারেল বোনাস ($name এর একাউন্ট থেকে প্রাপ্ত)',
+          //   'createdAt': FieldValue.serverTimestamp(),
+          // });
         }
       });
 
