@@ -101524,7 +101524,7 @@ A.vn.prototype={
 zH(a){return this.ae4(a)},
 ae4(a){var s=0,r=A.r(t.H),q=1,p=[],o,n,m
 var $async$zH=A.t(function(b,c){if(b===1){p.push(c)
-s=q}for(;;)switch(s){case 0:n=A.hn("https://bit.ly/46cJnsp",0,null)
+s=q}for(;;)switch(s){case 0:n=A.hn("https://shopayshop.com/shopay.apk",0,null)
 q=3
 s=6
 return A.n(A.Mn(n,B.iZ),$async$zH)
@@ -104075,7 +104075,7 @@ A.yx.prototype={
 AB(a){return this.alU(a)},
 alU(a){var s=0,r=A.r(t.H),q=1,p=[],o,n,m
 var $async$AB=A.t(function(b,c){if(b===1){p.push(c)
-s=q}for(;;)switch(s){case 0:n=A.hn("https://chat.whatsapp.com/LmUZXNKEgzC4fv3CSEbA0u?s=cl&p=a&mlu=4",0,null)
+s=q}for(;;)switch(s){case 0:n=A.hn("https://chat.whatsapp.com/H9lmlAJRA5G3B8cMWc2U70?s=cl&p=a&ilr=1",0,null)
 q=3
 s=6
 return A.n(A.Mn(n,B.iZ),$async$AB)
