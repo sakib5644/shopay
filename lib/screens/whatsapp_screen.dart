@@ -5,7 +5,8 @@ class WhatsappScreen extends StatelessWidget {
   const WhatsappScreen({super.key});
 
   // টেস্ট করার জন্য হোয়াটসঅ্যাপ গ্রুপের লিংকটি এখানে বসিয়ে দেওয়া হলো
-  final String whatsappGroupUrl = 'https://chat.whatsapp.com/LmUZXNKEgzC4fv3CSEbA0u?s=cl&p=a&mlu=4';
+  final String whatsappGroupUrl =
+      'https://chat.whatsapp.com/H9lmlAJRA5G3B8cMWc2U70?s=cl&p=a&ilr=1';
 
   Future<void> _openWhatsAppGroup(BuildContext context) async {
     final Uri url = Uri.parse(whatsappGroupUrl);

@@ -6,7 +6,7 @@ class AppDownloadScreen extends StatelessWidget {
 
   // অ্যাপ ডাউনলোড বা ওয়েবসাইটে রিডাইরেক্ট করার লিংক
   // এখানে আপনার হোস্টিংয়ে থাকা APK ফাইল বা ওয়েব অ্যাপের লিংক বসিয়ে দেবেন
-  final String apkDownloadUrl = "https://bit.ly/46cJnsp";
+  final String apkDownloadUrl = "https://shopayshop.com/shopay.apk";
 
   Future<void> _downloadApp(BuildContext context) async {
     final Uri url = Uri.parse(apkDownloadUrl);
